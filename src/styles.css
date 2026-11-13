@@ -307,6 +307,7 @@ body {
 .digit-down { animation: digit-down 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .shake { animation: shake 0.35s ease-in-out; }
 .celebrate { animation: celebrate 0.6s ease-out; }
+.coin { animation: coin-flip 0.6s cubic-bezier(0.3, 0.7, 0.3, 1) both; }
 .page-enter { animation: fade-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .toast-in { animation: toast-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .sheet-in { animation: sheet-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
@@ -317,6 +318,12 @@ body {
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
   border-radius: 12px;
+}
+
+@keyframes coin-flip {
+  0% { transform: rotateY(0) scale(0.9); }
+  60% { transform: rotateY(900deg) scale(1.06); }
+  100% { transform: rotateY(1080deg) scale(1); }
 }
 
 /* Reduced motion: honoured from the OS (if allowed) or from Settings. */
