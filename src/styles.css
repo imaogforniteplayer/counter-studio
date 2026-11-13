@@ -1,0 +1,443 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Design tokens. Colours are "r g b" triplets so Tailwind can add alpha. */
+/* ------------------------------------------------------------------ */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: 11 11 14;
+  --surface: 21 21 27;
+  --raised: 31 31 39;
+  --line: 255 255 255;
+  --ink: 246 243 239;
+  --muted: 161 158 172;
+  --good: 98 214 146;
+  --bad: 255 104 104;
+  --accent: 255 138 61;
+  --accent2: 255 77 94;
+  --onaccent: 16 14 20;
+  --shadow-ink: 0 0 0;
+  --font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-num: var(--font-ui);
+  --num-weight: 650;
+  --num-stretch: 100%;
+  --num-scale: 1;
+  --btn-radius: 9999px;
+  --btn-aspect: 1;
+  --pad: 1.25rem;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: 247 245 241;
+  --surface: 255 255 255;
+  --raised: 240 237 232;
+  --line: 24 22 28;
+  --ink: 24 22 28;
+  --muted: 100 96 108;
+  --good: 22 134 78;
+  --bad: 201 42 42;
+  --shadow-ink: 60 40 20;
+}
+
+[data-numfont='mono'] {
+  --font-num: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  --num-weight: 600;
+}
+[data-numfont='serif'] {
+  --font-num: ui-serif, 'New York', Georgia, 'Times New Roman', serif;
+  --num-weight: 600;
+}
+[data-numfont='rounded'] {
+  --font-num: ui-rounded, 'SF Pro Rounded', 'Nunito', 'Varela Round', var(--font-ui);
+  --num-weight: 700;
+}
+[data-numfont='condensed'] {
+  --font-num: 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', ui-sans-serif, system-ui, sans-serif;
+  --num-weight: 700;
+  --num-stretch: 75%;
+}
+
+[data-btn='soft'] {
+  --btn-radius: 34%;
+}
+[data-btn='pill'] {
+  --btn-radius: 9999px;
+  --btn-aspect: 1.9;
+}
+[data-btn='square'] {
+  --btn-radius: 14px;
+}
+
+[data-compact='true'] {
+  --pad: 0.75rem;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: rgb(var(--bg));
+  color: rgb(var(--ink));
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+*:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.35);
+}
+
+/* ------------------------------------------------------------------ */
+/* Backgrounds                                                         */
+/* ------------------------------------------------------------------ */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background: rgb(var(--bg));
+}
+[data-bg='aurora'] .app-bg {
+  background:
+    radial-gradient(60% 50% at 15% -5%, rgb(var(--accent) / 0.2), transparent 70%),
+    radial-gradient(50% 45% at 95% 5%, rgb(var(--accent2) / 0.16), transparent 70%),
+    radial-gradient(70% 50% at 50% 115%, rgb(var(--accent2) / 0.1), transparent 70%), rgb(var(--bg));
+}
+[data-bg='grid'] .app-bg {
+  background:
+    linear-gradient(rgb(var(--line) / 0.05) 1px, transparent 1px) 0 0 / 36px 36px,
+    linear-gradient(90deg, rgb(var(--line) / 0.05) 1px, transparent 1px) 0 0 / 36px 36px,
+    radial-gradient(60% 50% at 50% 0%, rgb(var(--accent) / 0.12), transparent 70%), rgb(var(--bg));
+}
+[data-bg='dusk'] .app-bg {
+  background: linear-gradient(180deg, rgb(var(--accent2) / 0.22), rgb(var(--accent) / 0.05) 45%, transparent 75%), rgb(var(--bg));
+}
+[data-bg='color'] .app-bg {
+  background: var(--bg-color, rgb(var(--bg)));
+}
+[data-bg='image'] .app-bg {
+  background: var(--bg-image, none) center / cover no-repeat, rgb(var(--bg));
+}
+[data-bg='image'] .app-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(var(--bg) / 0.55);
+}
+
+/* ------------------------------------------------------------------ */
+/* Components                                                          */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line/10 bg-surface/80 shadow-soft backdrop-blur-sm;
+  }
+  .card-solid {
+    @apply rounded-2xl border border-line/10 bg-surface shadow-soft;
+  }
+  .glass {
+    @apply rounded-2xl border border-line/15 bg-surface/50 shadow-soft backdrop-blur-xl;
+  }
+  .hairline {
+    @apply border-line/10;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-line/15 bg-raised/70 px-3.5 py-2.5 text-[15px] text-ink placeholder:text-muted/70
+      transition-colors hover:border-line/25 focus:border-accent/70 focus:outline-none focus:ring-2 focus:ring-accent/25;
+  }
+  .input:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl border border-transparent font-medium
+      transition-[transform,background-color,border-color,box-shadow,opacity] duration-150 active:scale-[0.97]
+      disabled:pointer-events-none disabled:opacity-45;
+  }
+  .btn-sm {
+    @apply h-8 px-3 text-[13px];
+  }
+  .btn-md {
+    @apply h-10 px-4 text-sm;
+  }
+  .btn-lg {
+    @apply h-12 px-6 text-base;
+  }
+  .btn-primary {
+    @apply text-onaccent shadow-glow hover:brightness-110;
+    background: linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent2)));
+  }
+  .btn-secondary {
+    @apply border-line/15 bg-raised text-ink hover:border-line/30 hover:bg-raised/70;
+  }
+  .btn-ghost {
+    @apply text-muted hover:bg-line/10 hover:text-ink;
+  }
+  .btn-danger {
+    @apply border-bad/40 bg-bad/10 text-bad hover:bg-bad/20;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line/15 bg-raised/60 px-3 py-1 text-[13px] text-muted
+      transition-colors hover:border-line/30 hover:text-ink;
+  }
+  .chip[aria-pressed='true'],
+  .chip[data-active='true'] {
+    @apply border-accent/60 bg-accent/15 text-ink;
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+  }
+}
+
+/* The big counting number. Size is set by the page through --num-size. */
+.num {
+  font-family: var(--font-num);
+  font-weight: var(--num-weight);
+  font-stretch: var(--num-stretch);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-size: calc(var(--num-size, 7rem) * var(--num-scale, 1));
+}
+
+/* The big round count button. */
+.count-btn {
+  width: var(--count-size, 11rem);
+  height: calc(var(--count-size, 11rem) / var(--btn-aspect));
+  aspect-ratio: var(--btn-aspect) / 1;
+  border-radius: var(--btn-radius);
+  background: linear-gradient(145deg, rgb(var(--accent)), rgb(var(--accent2)));
+  color: rgb(var(--onaccent));
+  box-shadow:
+    0 0 0 1px rgb(var(--accent) / 0.5),
+    0 18px 50px -14px rgb(var(--accent) / 0.65),
+    inset 0 2px 0 rgb(255 255 255 / 0.28),
+    inset 0 -6px 14px rgb(0 0 0 / 0.14);
+  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s, filter 0.2s;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.count-btn:hover {
+  filter: brightness(1.06);
+}
+.count-btn:active,
+.count-btn[data-pressed='true'] {
+  transform: scale(0.95);
+  box-shadow:
+    0 0 0 1px rgb(var(--accent) / 0.5),
+    0 8px 24px -10px rgb(var(--accent) / 0.6),
+    inset 0 2px 0 rgb(255 255 255 / 0.2),
+    inset 0 -3px 10px rgb(0 0 0 / 0.18);
+}
+.count-btn-secondary {
+  width: var(--sub-size, 4.5rem);
+  height: calc(var(--sub-size, 4.5rem) / min(var(--btn-aspect), 1.4));
+  border-radius: min(var(--btn-radius), 9999px);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Animation                                                           */
+/* ------------------------------------------------------------------ */
+@keyframes digit-up {
+  from { transform: translateY(0.38em); opacity: 0; filter: blur(3px); }
+  to { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+@keyframes digit-down {
+  from { transform: translateY(-0.38em); opacity: 0; filter: blur(3px); }
+  to { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes celebrate {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+@keyframes boot-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.digit {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+.digit-up { animation: digit-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.digit-down { animation: digit-down 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.shake { animation: shake 0.35s ease-in-out; }
+.celebrate { animation: celebrate 0.6s ease-out; }
+.page-enter { animation: fade-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.toast-in { animation: toast-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.sheet-in { animation: sheet-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.overlay-in { animation: overlay-in 0.18s ease-out both; }
+.spinner { animation: spin 0.8s linear infinite; }
+.skeleton {
+  background: linear-gradient(90deg, rgb(var(--line) / 0.05) 25%, rgb(var(--line) / 0.12) 50%, rgb(var(--line) / 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 12px;
+}
+
+/* Reduced motion: honoured from the OS (if allowed) or from Settings. */
+[data-motion='reduced'] *,
+[data-motion='reduced'] *::before,
+[data-motion='reduced'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Tooltips (CSS only; every tooltip also has an aria-label on its control). */
+.tip {
+  position: relative;
+  display: inline-flex;
+}
+.tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translate(-50%, 4px);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 60;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(var(--bg));
+  background: rgb(var(--ink));
+  transition: opacity 0.15s, transform 0.15s;
+}
+.tip[data-side='bottom']::after { bottom: auto; top: calc(100% + 8px); transform: translate(-50%, -4px); }
+.tip[data-side='right']::after { left: calc(100% + 8px); bottom: 50%; transform: translate(-4px, 50%); }
+.tip:hover::after,
+.tip:focus-within::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.tip[data-side='right']:hover::after,
+.tip[data-side='right']:focus-within::after { transform: translate(0, 50%); }
+@media (hover: none) {
+  .tip::after { display: none; }
+}
+
+/* Range inputs */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: rgb(var(--line) / 0.18);
+  outline-offset: 6px;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent2)));
+  border: 2px solid rgb(var(--surface));
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+  cursor: pointer;
+}
+input[type='range']::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent2)));
+  border: 2px solid rgb(var(--surface));
+  cursor: pointer;
+}
+
+/* Colour inputs */
+input[type='color'] {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
+input[type='color']::-webkit-color-swatch { border: 0; border-radius: 9999px; }
+input[type='color']::-moz-color-swatch { border: 0; border-radius: 9999px; }
+
+/* Hide number spinners; we have our own controls. */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; }
+
+/* Slim scrollbars */
+* { scrollbar-width: thin; scrollbar-color: rgb(var(--line) / 0.25) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgb(var(--line) / 0.2); border-radius: 9999px; border: 2px solid transparent; background-clip: content-box; }
+
+/* Safe areas for notched phones */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top { padding-top: env(safe-area-inset-top); }
+
+/* Boot splash shown before the app has loaded. */
+.boot {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(var(--bg));
+}
+.boot-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffb347, #ff4d5e);
+  box-shadow: 0 20px 60px -12px rgb(255 100 80 / 0.55);
+  animation: boot-pulse 1.4s ease-in-out infinite;
+}
+
+@media print {
+  .app-bg, nav, .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+}
