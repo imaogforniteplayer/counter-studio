@@ -3,16 +3,20 @@ import { registerSW } from 'virtual:pwa-register';
 import './styles.css';
 import { AppProvider } from './app/AppProvider';
 import App from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const container = document.getElementById('root');
 if (!container) throw new Error('Tickwell could not find its root element.');
 
 // No StrictMode: the store is created once outside React and double effects add nothing here.
 createRoot(container).render(
-  <AppProvider>
-    <App />
-  </AppProvider>,
+  <ErrorBoundary>
+    <AppProvider>
+      <App />
+    </AppProvider>
+  </ErrorBoundary>,
 );
+(window as unknown as { __tickwellStarted?: boolean }).__tickwellStarted = true;
 
 // Work offline: the service worker caches the app after the first visit.
 if ('serviceWorker' in navigator) {

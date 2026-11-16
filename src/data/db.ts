@@ -211,11 +211,31 @@ export async function createIdbAdapter(factory: IDBFactory = indexedDB): Promise
   };
 }
 
+/** Reject if a promise has not settled in time. Some browsers (private modes, in-app browsers) never answer IndexedDB. */
+export function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${what} timed out`)), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e: unknown) => {
+        clearTimeout(timer);
+        reject(e instanceof Error ? e : new Error(String(e)));
+      },
+    );
+  });
+}
+
 /** Open IndexedDB if it works here, otherwise fall back to memory (and say so). */
 export async function openBestAdapter(): Promise<Adapter> {
   try {
     if (typeof indexedDB === 'undefined') throw new Error('IndexedDB is not available');
-    return await createIdbAdapter(indexedDB);
+    const adapter = await withTimeout(createIdbAdapter(indexedDB), 5000, 'Opening storage');
+    // Make sure reads work too, not only opening.
+    await withTimeout(adapter.load(), 8000, 'Reading storage');
+    return adapter;
   } catch {
     return createMemoryAdapter();
   }
