@@ -67,7 +67,9 @@ function inPage() {
       if (w > 4 && h > 4 && w * h > 0.15 * Math.min(r.width * r.height, o.width * o.height)) {
         const a = name(el), b = name(other);
         const key = [a, b].sort().join(' <-> ');
-        if (!problems.includes(`overlap: ${key}`)) problems.push(`overlap: ${key}`);
+        const nv = document.querySelector('nav.fixed.bottom-0, nav[class*="bottom-0"]');
+        const extra = ` [A ${Math.round(r.top)}-${Math.round(r.bottom)} / B ${Math.round(o.top)}-${Math.round(o.bottom)}; scrollY ${Math.round(scrollY)}, docH ${document.documentElement.scrollHeight}, viewH ${innerHeight}, mainPad ${getComputedStyle(document.querySelector('main')).paddingBottom}, nav ${nv ? Math.round(nv.getBoundingClientRect().top) : 'none'}]`;
+        if (!problems.some((x) => x.startsWith(`overlap: ${key}`))) problems.push(`overlap: ${key}${extra}`);
       }
     }
   }

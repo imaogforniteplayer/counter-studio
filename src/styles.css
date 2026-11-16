@@ -165,7 +165,7 @@ body {
   }
 
   .btn {
-    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl border border-transparent font-medium
+    @apply inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-transparent font-medium
       transition-[transform,background-color,border-color,box-shadow,opacity] duration-150 active:scale-[0.97]
       disabled:pointer-events-none disabled:opacity-45;
   }
@@ -193,7 +193,7 @@ body {
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-line/15 bg-raised/60 px-3 py-1 text-[13px] text-muted
+    @apply inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line/15 bg-raised/60 px-3 py-1 text-[13px] text-muted
       transition-colors hover:border-line/30 hover:text-ink;
   }
   .chip[aria-pressed='true'],

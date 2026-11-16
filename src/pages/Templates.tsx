@@ -34,8 +34,8 @@ function TemplateCard({ t, onUse, onCustomise, onDelete }: { t: Template; onUse:
           <Badge key={f}>{f}</Badge>
         ))}
       </div>
-      <div className="mt-auto flex gap-2">
-        <Button variant="primary" className="flex-1" icon={<Plus size={16} />} onClick={onUse}>
+      <div className="mt-auto flex flex-wrap gap-2">
+        <Button variant="primary" className="min-w-[8.5rem] flex-1" icon={<Plus size={16} />} onClick={onUse}>
           Use template
         </Button>
         <Button icon={<SlidersHorizontal size={15} />} onClick={onCustomise} aria-label={`Customise ${t.name} before creating`}>
