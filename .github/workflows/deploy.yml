@@ -43,6 +43,10 @@ jobs:
       - name: Smoke test the production build
         run: npm run smoke
 
+      - name: Layout check (controls covered or overlapping)
+        run: npm run layout
+        continue-on-error: true
+
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
 

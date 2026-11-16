@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "layout": "node scripts/layout.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
