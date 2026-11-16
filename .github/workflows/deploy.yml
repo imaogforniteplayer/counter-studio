@@ -45,7 +45,6 @@ jobs:
 
       - name: Layout check (controls covered or overlapping)
         run: npm run layout
-        continue-on-error: true
 
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
