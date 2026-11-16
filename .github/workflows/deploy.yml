@@ -37,6 +37,12 @@ jobs:
       - name: Production build
         run: npx vite build
 
+      - name: Install browser for the smoke test
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke test the production build
+        run: npm run smoke
+
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
 
