@@ -57,7 +57,7 @@ function Toasts({ items, dismiss }: { items: ToastItem[]; dismiss: (id: number) 
         <div
           key={t.id}
           role={t.kind === 'error' ? 'alert' : 'status'}
-          className="toast-in card-solid pointer-events-auto flex max-w-md items-center gap-3 py-2.5 pl-4 pr-2 text-sm shadow-xl"
+          className="toast-in card-solid pointer-events-none flex max-w-md items-center gap-3 py-2.5 pl-4 pr-2 text-sm shadow-xl"
         >
           <span className={cx('shrink-0', t.kind === 'success' && 'text-good', t.kind === 'error' && 'text-bad', t.kind === 'info' && 'text-accent')}>
             {TOAST_ICON[t.kind]}
@@ -66,7 +66,7 @@ function Toasts({ items, dismiss }: { items: ToastItem[]; dismiss: (id: number) 
           {t.action && (
             <button
               type="button"
-              className="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-accent hover:bg-accent/15"
+              className="pointer-events-auto rounded-lg px-2.5 py-1 text-[13px] font-semibold text-accent hover:bg-accent/15"
               onClick={() => {
                 t.action?.onClick();
                 dismiss(t.id);
@@ -75,7 +75,7 @@ function Toasts({ items, dismiss }: { items: ToastItem[]; dismiss: (id: number) 
               {t.action.label}
             </button>
           )}
-          <IconButton label="Dismiss" size="sm" tooltip={false} icon={<X size={15} />} onClick={() => dismiss(t.id)} />
+          <IconButton className="pointer-events-auto" label="Dismiss" size="sm" tooltip={false} icon={<X size={15} />} onClick={() => dismiss(t.id)} />
         </div>
       ))}
     </div>
@@ -133,8 +133,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toast = useCallback<ToastFn>(
     (message, kind = 'info', action) => {
       const id = nextId.current++;
-      setToasts((list) => [...list.slice(-3), { id, message, kind, action }]);
-      const ms = kind === 'error' ? 9000 : action ? 6500 : 3800;
+      setToasts((list) => [...list.slice(-1), { id, message, kind, action }]);
+      const ms = kind === 'error' ? 7000 : action ? 6000 : 3000;
       window.setTimeout(() => dismiss(id), ms);
     },
     [dismiss],

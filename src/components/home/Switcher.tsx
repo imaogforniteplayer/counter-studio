@@ -29,7 +29,7 @@ export function Switcher({ counters, current, onPrev, onNext }: { counters: Coun
   ];
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full min-w-0 items-center gap-2">
       <IconButton label="Previous counter ([)" icon={<ChevronLeft size={19} />} variant="secondary" disabled={!many} onClick={onPrev} />
       <Menu
         label="Choose a counter"
@@ -55,7 +55,9 @@ export function Switcher({ counters, current, onPrev, onNext }: { counters: Coun
       <Button className="ml-auto hidden sm:inline-flex" icon={<Plus size={16} />} onClick={() => dialogs.openEditor({})}>
         New counter
       </Button>
-      <IconButton className="ml-auto sm:hidden" label="New counter (N)" variant="secondary" icon={<Plus size={19} />} onClick={() => dialogs.openEditor({})} />
+      <div className="ml-auto shrink-0 sm:hidden">
+        <IconButton label="New counter (N)" variant="secondary" icon={<Plus size={19} />} onClick={() => dialogs.openEditor({})} />
+      </div>
     </div>
   );
 }

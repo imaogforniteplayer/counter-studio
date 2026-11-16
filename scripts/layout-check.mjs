@@ -32,6 +32,13 @@ function inPage() {
   };
   // If a modal is open, only the modal's controls matter; the page behind is meant to be covered.
   const modal = document.querySelector('[role=dialog][aria-modal=true], [role=alertdialog]');
+  const isFixed = (el) => {
+    for (let p = el; p && p !== document.documentElement; p = p.parentElement) {
+      const pos = getComputedStyle(p).position;
+      if (pos === 'fixed' || pos === 'sticky') return true;
+    }
+    return false;
+  };
   const all = [...document.querySelectorAll(SEL)].filter((e) => (modal ? modal.contains(e) : !e.closest('[role=dialog]') || true)).filter(visible);
   const scope = modal ? all : all.filter((e) => !document.querySelector('[role=dialog][aria-modal=true]'));
   for (const el of scope) {
@@ -61,6 +68,8 @@ function inPage() {
     // Overlap with another control (neither contains the other).
     for (const other of scope) {
       if (other === el || other.contains(el) || el.contains(other)) continue;
+      // A fixed bar floats over the page by design; whether it hides something is decided by the 'covered' test above.
+      if (isFixed(el) || isFixed(other)) continue;
       const o = other.getBoundingClientRect();
       const w = Math.min(r.right, o.right) - Math.max(r.left, o.left);
       const h = Math.min(r.bottom, o.bottom) - Math.max(r.top, o.top);

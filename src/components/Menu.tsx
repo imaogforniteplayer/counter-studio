@@ -64,7 +64,7 @@ export function Menu({
 
   return (
     <div ref={wrap} className={cx('relative inline-flex', className)}>
-      <span onClick={() => setOpen((o) => !o)} className="inline-flex">
+      <span onClick={() => setOpen((o) => !o)} className="inline-flex min-w-0 max-w-full flex-1">
         {trigger ? (
           trigger(open)
         ) : (
