@@ -59,6 +59,7 @@ for (const [label, opts, flags] of sizes) {
     } else console.log(`[${label}] ${where}: ok`);
   };
   const go = async (hash) => {
+    await clearDialogs();
     await page.goto(base + hash);
     await page.waitForTimeout(450);
   };
@@ -94,9 +95,18 @@ for (const [label, opts, flags] of sizes) {
   // Attribute selectors keep working even if the page behind a dialog is marked hidden to screen readers.
   const aria = (prefix) => page.locator(`button[aria-label^="${prefix}"]:visible`);
   const text = (t) => page.locator(`button:visible:has-text("${t}")`);
+  // Escape closes the top dialog. A half-filled editor then asks "Discard your changes?", which a person would answer, so do the same.
   const esc = async () => {
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
+    const discard = page.locator('button:visible:text-is("Discard")');
+    if (await discard.count()) {
+      await discard.first().click({ timeout: 1500 }).catch(() => {});
+      await page.waitForTimeout(200);
+    }
+  };
+  const clearDialogs = async () => {
+    for (let i = 0; i < 4 && (await page.locator('[role=dialog]').count()); i++) await esc();
   };
 
   await go('');
@@ -180,7 +190,7 @@ for (const [label, opts, flags] of sizes) {
     await report('home: counter switcher menu');
     await esc();
   }
-  if (await click(text('Share'), 250, 'Share')) {
+  if (await click(aria('Share'), 250, 'Share')) {
     await report('share dialog');
     await esc();
   }
@@ -196,10 +206,10 @@ for (const [label, opts, flags] of sizes) {
   // The editor, for each counter type.
   await go('#/');
   if (await click(aria('New counter'))) {
-    for (const mode of ['Normal', 'Countdown', 'Goal', 'Score', 'Tally', 'Interval', 'Multi']) {
-      const pick = page.getByRole('radio', { name: new RegExp(`^${mode}`) });
-      const ok = (await pick.count()) ? await click(pick) : await click(page.getByText(mode, { exact: true }));
-      if (ok) await report(`editor: ${mode}`);
+    await report('editor: choose a type');
+    for (const mode of ['Counter', 'Countdown', 'Goal', 'Score', 'Tally', 'Interval', 'Multi-counter']) {
+      if (await page.locator('[role=dialog] button:visible:has-text("Change type")').count()) await click(text('Change type'), 250, 'Change type');
+      if (await click(page.locator(`[role=dialog] button:visible:has(span:text-is("${mode}"))`), 300, `type ${mode}`)) await report(`editor: ${mode}`);
     }
     await esc();
   }
