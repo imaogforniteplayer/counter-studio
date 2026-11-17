@@ -31,7 +31,11 @@ function inPage() {
     return false;
   };
   // If a modal is open, only the modal's controls matter; the page behind is meant to be covered.
-  const modal = document.querySelector('[role=dialog][aria-modal=true], [role=alertdialog]');
+  const modal = document.querySelector('[role=menu], [role=dialog][aria-modal=true], [role=alertdialog], [role=region][aria-label$="full screen"]');
+  if (modal && modal.getAttribute('role') === 'menu') {
+    const mr = modal.getBoundingClientRect();
+    if (mr.top < -1 || mr.bottom > innerHeight + 1 || mr.left < -1 || mr.right > innerWidth + 1) problems.push(`menu does not fit on screen (${Math.round(mr.left)},${Math.round(mr.top)} to ${Math.round(mr.right)},${Math.round(mr.bottom)} on ${innerWidth}x${innerHeight})`);
+  }
   const isFixed = (el) => {
     for (let p = el; p && p !== document.documentElement; p = p.parentElement) {
       const pos = getComputedStyle(p).position;
@@ -40,8 +44,10 @@ function inPage() {
     return false;
   };
   const all = [...document.querySelectorAll(SEL)].filter((e) => (modal ? modal.contains(e) : !e.closest('[role=dialog]') || true)).filter(visible);
-  const scope = modal ? all : all.filter((e) => !document.querySelector('[role=dialog][aria-modal=true]'));
-  for (const el of scope) {
+  const scope = modal ? all : all.filter((e) => !document.querySelector('[role=menu], [role=dialog][aria-modal=true]'));
+  const fixedFlags = scope.map(isFixed);
+  for (let i = 0; i < scope.length; i++) {
+    const el = scope[i];
     el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
     const r = el.getBoundingClientRect();
     if (r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) {
@@ -66,11 +72,14 @@ function inPage() {
     }
     if (covered >= 2 || (covered >= 1 && by && getComputedStyle(by).position === 'fixed')) problems.push(`covered by ${name(by)}${by.className && typeof by.className === 'string' ? ' .' + by.className.split(' ').slice(0, 3).join('.') : ''}: ${name(el)}`);
     // Overlap with another control (neither contains the other).
-    for (const other of scope) {
+    const rects = scope.map((e) => e.getBoundingClientRect());
+    for (let j = 0; j < scope.length; j++) {
+      const other = scope[j];
       if (other === el || other.contains(el) || el.contains(other)) continue;
+      const o = rects[j];
+      if (o.bottom < 0 || o.top > innerHeight) continue;
       // A fixed bar floats over the page by design; whether it hides something is decided by the 'covered' test above.
-      if (isFixed(el) || isFixed(other)) continue;
-      const o = other.getBoundingClientRect();
+      if (fixedFlags[i] || fixedFlags[j]) continue;
       const w = Math.min(r.right, o.right) - Math.max(r.left, o.left);
       const h = Math.min(r.bottom, o.bottom) - Math.max(r.top, o.top);
       if (w > 4 && h > 4 && w * h > 0.15 * Math.min(r.width * r.height, o.width * o.height)) {
@@ -81,6 +90,20 @@ function inPage() {
         if (!problems.some((x) => x.startsWith(`overlap: ${key}`))) problems.push(`overlap: ${key}${extra}`);
       }
     }
+  }
+  // The page itself must never scroll sideways.
+  if (document.documentElement.scrollWidth > innerWidth + 1) problems.push(`the page scrolls sideways (content ${document.documentElement.scrollWidth}px wide, screen ${innerWidth}px)`);
+  // Text that spills out of its own box (big numbers, long names).
+  for (const t of document.querySelectorAll('.num, h1, h2, h3, [data-fit]')) {
+    if (!visible(t) || isFixed(t) && t.closest('[role=dialog]')) continue;
+    const cs = getComputedStyle(t);
+    if (/(hidden|clip)/.test(cs.overflowX)) continue;
+    const box = (t.closest('.card, .card-solid, .glass, button, section, [role=dialog]') || t.parentElement).getBoundingClientRect();
+    const r = t.getBoundingClientRect();
+    const tr = document.createRange();
+    tr.selectNodeContents(t);
+    const rr = tr.getBoundingClientRect();
+    if (rr.width > 0 && (rr.right > box.right + 2 || rr.left < box.left - 2) && rr.right > r.right + 2) problems.push(`text spills out of its box: ${name(t)} (text ${Math.round(rr.left)}-${Math.round(rr.right)}, box ${Math.round(box.left)}-${Math.round(box.right)})`);
   }
   scrollTo({ top: 0, left: 0, behavior: 'instant' });
   return [...new Set(problems)];

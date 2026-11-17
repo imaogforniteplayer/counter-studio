@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { IconButton } from './ui';
@@ -34,10 +35,52 @@ export function Menu({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number; minWidth: number; maxHeight: number } | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setOpen(false), []);
-  useDismiss(open, close, wrap);
+  useDismiss(open, close, [wrap, list]);
+
+  // The menu is drawn in a layer of its own on top of the page, so no card, bar or
+  // scrolling area can ever cover or clip it. It opens downwards, or upwards when that fits better.
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    const anchor = wrap.current?.getBoundingClientRect();
+    const menu = list.current;
+    if (!anchor || !menu) return;
+    const gap = 6;
+    const margin = 8;
+    const w = Math.max(menu.offsetWidth, anchor.width);
+    const natural = menu.scrollHeight;
+    const below = window.innerHeight - anchor.bottom - gap - margin;
+    const above = anchor.top - gap - margin;
+    const up = natural > below && above > below;
+    const maxHeight = Math.max(120, up ? above : below);
+    const height = Math.min(natural, maxHeight);
+    const top = up ? anchor.top - gap - height : anchor.bottom + gap;
+    let left = align === 'right' ? anchor.right - w : anchor.left;
+    left = Math.min(Math.max(margin, left), Math.max(margin, window.innerWidth - w - margin));
+    setPos({ left, top, minWidth: anchor.width, maxHeight });
+  }, [open, align, items.length]);
+
+  // Scrolling or resizing moves the button out from under the menu, so just close it.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onScroll = (e: Event) => {
+      if (e.target instanceof Node && list.current?.contains(e.target)) return;
+      setOpen(false);
+    };
+    const onResize = () => setOpen(false);
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -71,13 +114,15 @@ export function Menu({
           <IconButton label={label} size="sm" icon={<MoreHorizontal size={18} />} aria-haspopup="menu" aria-expanded={open} active={open} />
         )}
       </span>
-      {open && (
+      {open &&
+        createPortal(
         <div
           ref={list}
           role="menu"
           aria-label={label}
           onKeyDown={onKeyDown}
-          className={cx('sheet-in card-solid absolute top-full z-40 mt-1.5 min-w-[13.5rem] p-1.5 shadow-xl', align === 'right' ? 'right-0' : 'left-0')}
+          className="card-solid fixed z-[80] min-w-[13.5rem] overflow-y-auto p-1.5 shadow-xl"
+          style={pos ? { left: pos.left, top: pos.top, minWidth: Math.max(216, pos.minWidth), maxHeight: pos.maxHeight } : { left: 0, top: 0, visibility: 'hidden' }}
         >
           {items.map((item) => (
             <div key={item.label}>
@@ -100,8 +145,9 @@ export function Menu({
               </button>
             </div>
           ))}
-        </div>
-      )}
+        </div>,
+        document.body,
+        )}
     </div>
   );
 }
