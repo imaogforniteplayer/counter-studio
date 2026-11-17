@@ -43,7 +43,14 @@ for (const [label, opts, flags] of sizes) {
   if (flags.bigText) await page.addInitScript(() => document.addEventListener('DOMContentLoaded', () => (document.documentElement.style.fontSize = '20px')));
 
   const report = async (where) => {
-    await page.evaluate(() => document.querySelectorAll('.toast-in').forEach((t) => t.remove())).catch(() => {});
+    // Hide toasts rather than delete them: React owns those nodes and removing them behind its back crashes the page.
+    await page.evaluate(() => document.querySelectorAll('.toast-in').forEach((t) => (t.style.display = 'none'))).catch(() => {});
+    const crashed = await page.evaluate(() => /something went wrong/i.test(document.body.innerText)).catch(() => false);
+    if (crashed) {
+      total++;
+      console.log(`\n[${label}] ${where}\n  - the app crashed and showed its error screen`);
+      return;
+    }
     const issues = await checkLayout(page).catch((e) => [`checker failed: ${e.message}`]);
     if (issues.length) {
       total += issues.length;
