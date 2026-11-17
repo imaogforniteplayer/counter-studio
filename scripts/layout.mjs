@@ -64,6 +64,21 @@ for (const [label, opts, flags] of sizes) {
     } catch (e) {
       const msg = String(e.message || e).split('\n').slice(0, 3).join(' | ').slice(0, 240);
       console.log(`[${label}] could not click ${what}: ${msg}`);
+      const state = await page
+        .evaluate(() => {
+          const top = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+          return {
+            hash: location.hash,
+            buttons: document.querySelectorAll('button').length,
+            dialogs: document.querySelectorAll('[role=dialog]').length,
+            inert: document.querySelectorAll('[inert], [aria-hidden=true]:not(svg):not(span)').length,
+            crashed: /something went wrong/i.test(document.body.innerText),
+            middle: top ? `${top.tagName}.${String(top.className).slice(0, 50)}` : 'nothing',
+            text: document.body.innerText.replace(/\s+/g, ' ').slice(0, 160),
+          };
+        })
+        .catch((err) => ({ evaluateFailed: String(err.message).slice(0, 80) }));
+      console.log(`    page state: ${JSON.stringify(state)}`);
       misses++;
       return false;
     }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangle, Check, Link2, ShieldCheck } from 'lucide-react';
-import { useStore, useToast } from '../app/context';
+import { useStore } from '../app/context';
 import { counterFromShareToken, tokenFromHash } from '../core/share';
 import type { Counter } from '../core/types';
 import { MODE_INFO } from '../core/counter';
@@ -38,7 +38,6 @@ function tokenFromInput(text: string): string | null {
 
 export default function ImportPage() {
   const store = useStore();
-  const toast = useToast();
   const route = useRoute();
   const urlToken = route.query.get('d');
   const [pasted, setPasted] = useState('');
@@ -61,7 +60,6 @@ export default function ImportPage() {
   const add = (c: Counter) => {
     const created = store.addCounter(c);
     store.selectCounter(created.id);
-    toast(`Added “${created.name}” to your counters.`, 'success');
     navigate('/');
   };
 

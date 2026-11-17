@@ -263,7 +263,6 @@ function EditorInner({ options, onClose }: { options: EditorOptions; onClose: ()
     }
     const created = store.addCounter({ ...common, mode: draft.mode });
     store.selectCounter(created.id);
-    toast(`Created “${created.name}”.`, 'success');
     navigate('/');
     onClose();
   };

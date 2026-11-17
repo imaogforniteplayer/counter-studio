@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { formatNumber } from '../../core/format';
 import { cx } from '../../lib/cx';
@@ -27,6 +27,32 @@ export function EditableNumber({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<number | null>(value);
+  const host = useRef<HTMLDivElement>(null);
+  const digits = useRef<HTMLSpanElement>(null);
+  const [fit, setFit] = useState(1);
+
+  // Whatever size the page asked for, shrink the number until it really fits the space it is in.
+  // Measuring beats guessing from the screen width, because the real column is often narrower.
+  const shown = formatNumber(value);
+  useLayoutEffect(() => {
+    const box = host.current;
+    const text = digits.current;
+    if (!box || !text) return;
+    const measure = () => {
+      const room = box.clientWidth - 16;
+      const width = text.offsetWidth;
+      if (room <= 0 || width <= 0) return;
+      setFit((current) => {
+        const next = Math.max(0.2, Math.min(1, (current * room) / width));
+        return Math.abs(next - current) < 0.01 ? current : next;
+      });
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const watcher = new ResizeObserver(measure);
+    watcher.observe(box);
+    return () => watcher.disconnect();
+  }, [shown, editing, style, className]);
 
   const save = () => {
     if (draft !== null) onCommit(draft);
@@ -62,19 +88,23 @@ export function EditableNumber({
   }
 
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => {
-        setDraft(value);
-        setEditing(true);
-      }}
-      aria-label={`${label}: ${formatNumber(value)}. Tap to type a number.`}
-      title="Tap to type a number"
-      className={cx('num block max-w-full cursor-text select-none rounded-2xl px-2 transition-colors hover:bg-line/5', className)}
-      style={style}
-    >
-      <AnimatedNumber value={value} />
-    </button>
+    <div ref={host} className="w-full min-w-0 text-center">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+        aria-label={`${label}: ${shown}. Tap to type a number.`}
+        title="Tap to type a number"
+        className={cx('num inline-block max-w-full cursor-text select-none whitespace-nowrap rounded-2xl px-2 transition-colors hover:bg-line/5', className)}
+        style={{ ...style, ['--num-fit' as string]: fit } as CSSProperties}
+      >
+        <span ref={digits} className="inline-block">
+          <AnimatedNumber value={value} />
+        </span>
+      </button>
+    </div>
   );
 }

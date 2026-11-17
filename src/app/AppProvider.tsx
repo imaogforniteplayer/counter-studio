@@ -49,7 +49,7 @@ const TOAST_ICON = {
 function Toasts({ items, dismiss }: { items: ToastItem[]; dismiss: (id: number) => void }) {
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-[84px] z-[70] flex flex-col items-center gap-2 px-4 md:bottom-6 md:left-[76px] lg:left-[248px]"
+      className="pointer-events-none fixed inset-x-0 top-3 z-[70] flex flex-col items-center gap-2 px-4 pt-[env(safe-area-inset-top)] md:left-[76px] lg:left-[248px]"
       aria-live="polite"
       aria-atomic="false"
     >
@@ -133,7 +133,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toast = useCallback<ToastFn>(
     (message, kind = 'info', action) => {
       const id = nextId.current++;
-      setToasts((list) => [...list.slice(-1), { id, message, kind, action }]);
+      setToasts(() => [{ id, message, kind, action }]);
       const ms = kind === 'error' ? 7000 : action ? 6000 : 3000;
       window.setTimeout(() => dismiss(id), ms);
     },

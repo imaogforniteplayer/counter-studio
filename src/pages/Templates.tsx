@@ -76,7 +76,6 @@ export default function TemplatesPage() {
     const counter = counterFromConfig(t.config, t.name);
     const created = store.addCounter(counter);
     store.selectCounter(created.id);
-    toast(`Created “${created.name}”.`, 'success');
     navigate('/');
   };
 

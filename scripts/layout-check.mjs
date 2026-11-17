@@ -100,9 +100,21 @@ function inPage() {
     if (/(hidden|clip)/.test(cs.overflowX)) continue;
     const box = (t.closest('.card, .card-solid, .glass, button, section, [role=dialog]') || t.parentElement).getBoundingClientRect();
     const r = t.getBoundingClientRect();
-    const tr = document.createRange();
-    tr.selectNodeContents(t);
-    const rr = tr.getBoundingClientRect();
+    // Measure only the text people can see: screen-reader-only copies sit off to the side by design.
+    let left = Infinity;
+    let right = -Infinity;
+    const walker = document.createTreeWalker(t, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!n.textContent.trim() || n.parentElement.closest('.sr-only')) continue;
+      const tr = document.createRange();
+      tr.selectNodeContents(n);
+      const b = tr.getBoundingClientRect();
+      if (b.width > 0) {
+        left = Math.min(left, b.left);
+        right = Math.max(right, b.right);
+      }
+    }
+    const rr = right > left ? { left, right, width: right - left } : { left: 0, right: 0, width: 0 };
     if (rr.width > 0 && (rr.right > box.right + 2 || rr.left < box.left - 2) && rr.right > r.right + 2) problems.push(`text spills out of its box: ${name(t)} (text ${Math.round(rr.left)}-${Math.round(rr.right)}, box ${Math.round(box.left)}-${Math.round(box.right)})`);
   }
   scrollTo({ top: 0, left: 0, behavior: 'instant' });
