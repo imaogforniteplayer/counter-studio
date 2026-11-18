@@ -89,25 +89,25 @@ export default function HistoryPage() {
       />
 
       <Card className="mb-5 space-y-4 p-4" solid>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="relative lg:col-span-2">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="relative min-w-[14rem] flex-[2_1_16rem]">
             <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
             <TextInput type="search" aria-label="Search history" placeholder="Search by name, number, date…" className="pl-10" value={filters.query} onChange={(query) => set({ query })} />
           </div>
-          <Select
-            aria-label="Counter"
-            value={filters.counterId ?? ''}
-            onChange={(v) => set({ counterId: v || null })}
-            options={[{ value: '', label: 'All counters' }, ...Object.entries(names).map(([id, name]) => ({ value: id, label: name }))]}
-          />
-          <div className="flex items-center gap-2">
-            <Field label="From" htmlFor="h-from" className="flex-1">
-              <TextInput id="h-from" type="date" value={filters.from === null ? '' : dateInputValue(filters.from)} onChange={(v) => set({ from: parseDateInput(v) })} />
-            </Field>
-            <Field label="To" htmlFor="h-to" className="flex-1">
-              <TextInput id="h-to" type="date" value={filters.to === null ? '' : dateInputValue(filters.to)} onChange={(v) => { const t = parseDateInput(v); set({ to: t === null ? null : endOfDay(t) }); }} />
-            </Field>
+          <div className="min-w-[11rem] flex-[1_1_12rem]">
+            <Select
+              aria-label="Counter"
+              value={filters.counterId ?? ''}
+              onChange={(v) => set({ counterId: v || null })}
+              options={[{ value: '', label: 'All counters' }, ...Object.entries(names).map(([id, name]) => ({ value: id, label: name }))]}
+            />
           </div>
+          <Field label="From" htmlFor="h-from" className="min-w-[9.5rem] flex-[1_1_9.5rem]">
+            <TextInput id="h-from" type="date" value={filters.from === null ? '' : dateInputValue(filters.from)} onChange={(v) => set({ from: parseDateInput(v) })} />
+          </Field>
+          <Field label="To" htmlFor="h-to" className="min-w-[9.5rem] flex-[1_1_9.5rem]">
+            <TextInput id="h-to" type="date" value={filters.to === null ? '' : dateInputValue(filters.to)} onChange={(v) => { const t = parseDateInput(v); set({ to: t === null ? null : endOfDay(t) }); }} />
+          </Field>
         </div>
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Kinds of change">
           {KIND_GROUPS.map((k) => (
