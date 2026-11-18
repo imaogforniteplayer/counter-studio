@@ -93,10 +93,13 @@ function inPage() {
   }
   // The page itself must never scroll sideways.
   if (document.documentElement.scrollWidth > innerWidth + 1) {
+    const describe = (e) => `${name(e)} ${e.className && typeof e.className === 'string' ? '.' + e.className.split(' ').slice(0, 3).join('.') : ''} right=${Math.round(e.getBoundingClientRect().right)} pos=${getComputedStyle(e).position} ov=${getComputedStyle(e).overflowX}`;
     const wide = [...document.querySelectorAll('body *')]
-      .filter((e) => visible(e) && !isFixed(e) && e.getBoundingClientRect().right > innerWidth + 1 && !e.closest('[class*="overflow-x-auto"], [class*="overflow-hidden"]'))
-      .map((e) => `${name(e)} ${e.className && typeof e.className === 'string' ? '.' + e.className.split(' ').slice(0, 3).join('.') : ''} right=${Math.round(e.getBoundingClientRect().right)}`);
-    problems.push(`the page scrolls sideways (content ${document.documentElement.scrollWidth}px wide, screen ${innerWidth}px); widest: ${wide.slice(0, 4).join(' ; ')}`);
+      .filter((e) => e.getBoundingClientRect().right > innerWidth + 1)
+      .sort((x, y) => y.getBoundingClientRect().right - x.getBoundingClientRect().right)
+      .map(describe);
+    const scrollers = [...document.querySelectorAll('body *')].filter((e) => e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).overflowX === 'visible' && e.clientWidth > 0).slice(0, 4).map((e) => `${describe(e)} scrollW=${e.scrollWidth} clientW=${e.clientWidth}`);
+    problems.push(`the page scrolls sideways (content ${document.documentElement.scrollWidth}px wide, screen ${innerWidth}px); widest: ${wide.slice(0, 5).join(' ; ')} || overflowing boxes: ${scrollers.join(' ; ')}`);
   }
   // Text that spills out of its own box (big numbers, long names).
   for (const t of document.querySelectorAll('.num, h1, h2, h3, [data-fit]')) {
