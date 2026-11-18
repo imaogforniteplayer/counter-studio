@@ -349,7 +349,8 @@ body {
   transform: translate(-50%, 4px);
   white-space: nowrap;
   pointer-events: none;
-  opacity: 0;
+  /* Not drawn at all until shown: a hidden tooltip near the screen edge would still make the page scroll sideways. */
+  display: none;
   z-index: 60;
   padding: 5px 9px;
   border-radius: 8px;
@@ -357,13 +358,17 @@ body {
   font-weight: 500;
   color: rgb(var(--bg));
   background: rgb(var(--ink));
-  transition: opacity 0.15s, transform 0.15s;
+  animation: tip-in 0.15s ease-out;
+}
+@keyframes tip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .tip[data-side='bottom']::after { bottom: auto; top: calc(100% + 8px); transform: translate(-50%, -4px); }
 .tip[data-side='right']::after { left: calc(100% + 8px); bottom: 50%; transform: translate(-4px, 50%); }
 .tip:hover::after,
 .tip:has(:focus-visible)::after {
-  opacity: 1;
+  display: block;
   transform: translate(-50%, 0);
 }
 .tip[data-side='right']:hover::after,
