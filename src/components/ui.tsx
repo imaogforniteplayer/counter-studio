@@ -107,8 +107,18 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
 });
 
 export function Tooltip({ label, children, side = 'top' }: { label: string; children: ReactNode; side?: 'top' | 'bottom' | 'right' }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [align, setAlign] = useState<'center' | 'start' | 'end'>('center');
+  // Near a screen edge the tip lines up with the button's edge instead of hanging off the page.
+  const place = () => {
+    const box = ref.current?.getBoundingClientRect();
+    if (!box) return;
+    const half = (label.length * 7 + 24) / 2;
+    const mid = box.left + box.width / 2;
+    setAlign(mid + half > window.innerWidth - 8 ? 'end' : mid - half < 8 ? 'start' : 'center');
+  };
   return (
-    <span className="tip" data-tip={label} data-side={side}>
+    <span ref={ref} className="tip" data-tip={label} data-side={side} data-align={side === 'right' ? 'center' : align} onMouseEnter={place} onFocus={place}>
       {children}
     </span>
   );

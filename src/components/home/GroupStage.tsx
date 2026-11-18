@@ -77,7 +77,7 @@ export function GroupStage({ counter: c, counting, full }: StageProps) {
               key={r.id}
               style={stageVars(r.color)}
               className={cx(
-                'relative flex flex-col items-center gap-3 rounded-2xl border p-4 transition-colors sm:p-5',
+                'relative flex min-w-0 flex-col items-center gap-3 rounded-2xl border p-4 transition-colors sm:p-5',
                 isLeader ? 'border-accent/70 bg-accent/10' : 'border-line/10 bg-raised/40',
                 counting.shaking && 'shake',
               )}
@@ -99,7 +99,7 @@ export function GroupStage({ counter: c, counting, full }: StageProps) {
                   store.setTargetValue(c.id, r.id, n);
                 }}
               />
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-3">
                 <HoldButton
                   label={`Subtract ${formatNumber(c.step)} from ${r.name}`}
                   action={() => counting.bumpTarget(r.id, -1)}

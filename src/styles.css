@@ -373,6 +373,12 @@ body {
 }
 .tip[data-side='right']:hover::after,
 .tip[data-side='right']:has(:focus-visible)::after { transform: translate(0, 50%); }
+.tip[data-align='end']::after,
+.tip[data-align='end']:hover::after,
+.tip[data-align='end']:has(:focus-visible)::after { left: auto; right: 0; transform: none; }
+.tip[data-align='start']::after,
+.tip[data-align='start']:hover::after,
+.tip[data-align='start']:has(:focus-visible)::after { left: 0; transform: none; }
 @media (hover: none) {
   .tip::after { display: none; }
 }
