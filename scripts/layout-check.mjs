@@ -92,7 +92,12 @@ function inPage() {
     }
   }
   // The page itself must never scroll sideways.
-  if (document.documentElement.scrollWidth > innerWidth + 1) problems.push(`the page scrolls sideways (content ${document.documentElement.scrollWidth}px wide, screen ${innerWidth}px)`);
+  if (document.documentElement.scrollWidth > innerWidth + 1) {
+    const wide = [...document.querySelectorAll('body *')]
+      .filter((e) => visible(e) && !isFixed(e) && e.getBoundingClientRect().right > innerWidth + 1 && !e.closest('[class*="overflow-x-auto"], [class*="overflow-hidden"]'))
+      .map((e) => `${name(e)} ${e.className && typeof e.className === 'string' ? '.' + e.className.split(' ').slice(0, 3).join('.') : ''} right=${Math.round(e.getBoundingClientRect().right)}`);
+    problems.push(`the page scrolls sideways (content ${document.documentElement.scrollWidth}px wide, screen ${innerWidth}px); widest: ${wide.slice(0, 4).join(' ; ')}`);
+  }
   // Text that spills out of its own box (big numbers, long names).
   for (const t of document.querySelectorAll('.num, h1, h2, h3, [data-fit]')) {
     if (!visible(t) || isFixed(t) && t.closest('[role=dialog]')) continue;

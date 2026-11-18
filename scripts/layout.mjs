@@ -93,6 +93,7 @@ for (const [label, opts, flags] of sizes) {
   };
   const btn = (name, exact) => page.getByRole('button', { name, exact });
   // Attribute selectors keep working even if the page behind a dialog is marked hidden to screen readers.
+  const newCounter = () => page.locator('button[aria-label^="New counter"]:visible, button:visible:has-text("New counter")');
   const aria = (prefix) => page.locator(`button[aria-label^="${prefix}"]:visible`);
   const text = (t) => page.locator(`button:visible:has-text("${t}")`);
   // Escape closes the top dialog. A half-filled editor then asks "Discard your changes?", which a person would answer, so do the same.
@@ -140,7 +141,7 @@ for (const [label, opts, flags] of sizes) {
 
   // Awkward names.
   await go('#/');
-  if (await click(aria('New counter'))) {
+  if (await click(newCounter(), 250, 'New counter')) {
     await report('new counter dialog');
     const nameInput = page.getByLabel(/^Name/).first();
     if (await nameInput.count()) {
@@ -205,7 +206,7 @@ for (const [label, opts, flags] of sizes) {
 
   // The editor, for each counter type.
   await go('#/');
-  if (await click(aria('New counter'))) {
+  if (await click(newCounter(), 250, 'New counter')) {
     await report('editor: choose a type');
     for (const mode of ['Counter', 'Countdown', 'Goal', 'Score', 'Tally', 'Interval', 'Multi-counter']) {
       if (await page.locator('[role=dialog] button:visible:has-text("Change type")').count()) await click(text('Change type'), 250, 'Change type');

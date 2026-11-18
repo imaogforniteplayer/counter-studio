@@ -70,7 +70,7 @@ export function CounterCard({ counter, view = 'grid', onOpen, onBump, menu, arti
 
   const value = (
     <span className={cx('block', view === 'list' && 'text-right')}>
-      <span className="num block text-[34px] leading-none" style={{ ['--num-size' as string]: '2.1rem', color: ink }}>
+      <span className="num block whitespace-nowrap" style={{ ['--num-size' as string]: `${cardNumberPx(s.primary.length, view)}px`, color: ink }}>
         {s.primary}
       </span>
       {s.secondary && <span className={cx('mt-1 block truncate text-[12.5px]', sub)}>{s.secondary}</span>}
@@ -155,4 +155,10 @@ export function CounterCard({ counter, view = 'grid', onOpen, onBump, menu, arti
       </div>
     </article>
   );
+}
+
+/** Font size that keeps the value inside its card: 34px for short numbers, smaller as digits are added. */
+function cardNumberPx(chars: number, view: 'grid' | 'list'): number {
+  const room = view === 'list' ? 150 : 210;
+  return Math.round(Math.max(16, Math.min(34, room / (Math.max(chars, 1) * 0.62))));
 }
