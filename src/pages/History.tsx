@@ -141,7 +141,7 @@ export default function HistoryPage() {
                   const goal = e.kind === 'goal';
                   return (
                     <li key={e.id} className={cx('flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3', e.reverted && 'opacity-60')}>
-                      <span className="w-14 shrink-0 text-[12.5px] tabular-nums text-muted">{formatTime(e.at)}</span>
+                      <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[12.5px] tabular-nums text-muted">{formatTime(e.at)}</span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[14px] font-medium">
                           {names[e.counterId] ?? 'Deleted counter'}

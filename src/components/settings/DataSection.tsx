@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import { Archive, Database, Download, FileJson, FileSpreadsheet, RotateCcw, Trash2, Upload } from 'lucide-react';
 import { useAppState, useConfirm, useStore, useToast } from '../../app/context';
@@ -15,6 +16,23 @@ function when(ts: number): string {
 interface Pending {
   backup: BackupFile;
   fileName: string;
+}
+
+function Block({ icon, title, description, action, tone, children }: { icon: ReactNode; title: string; description: ReactNode; action?: ReactNode; tone?: 'danger'; children: ReactNode }) {
+  const danger = tone === 'danger';
+  return (
+    <div className={danger ? 'rounded-2xl border border-bad/30 bg-bad/5 p-4 sm:p-5' : 'rounded-2xl border border-line/10 bg-raised/30 p-4 sm:p-5'}>
+      <div className="flex flex-wrap items-start gap-x-3 gap-y-3">
+        <span className={danger ? 'grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-bad/15 text-bad' : 'grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent'}>{icon}</span>
+        <div className="min-w-0 flex-1 basis-52">
+          <h3 className={danger ? 'text-[15px] font-semibold text-bad' : 'text-[15px] font-semibold'}>{title}</h3>
+          <p className="mt-0.5 text-[13.5px] leading-snug text-muted">{description}</p>
+        </div>
+        {action}
+      </div>
+      <div className="mt-4">{children}</div>
+    </div>
+  );
 }
 
 export function DataSection() {
@@ -118,18 +136,14 @@ export function DataSection() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {storage === 'memory' && (
         <Notice tone="warn">
           This browser is not letting Tickwell save data, so everything is held in memory and will be lost when you close the tab. Export a backup before you leave.
         </Notice>
       )}
 
-      <div>
-        <h3 className="mb-1 flex items-center gap-2 text-[15px] font-semibold">
-          <Download size={16} aria-hidden="true" /> Export
-        </h3>
-        <p className="mb-3 text-sm text-muted">Save your data as a file you keep. The JSON backup contains everything and can be imported again.</p>
+      <Block icon={<Download size={18} aria-hidden="true" />} title="Export" description="Save your data as a file you keep. The JSON backup contains everything and can be imported again.">
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" icon={<FileJson size={16} />} onClick={exportJson}>
             Full backup (JSON)
@@ -141,13 +155,9 @@ export function DataSection() {
             History (CSV)
           </Button>
         </div>
-      </div>
+      </Block>
 
-      <div>
-        <h3 className="mb-1 flex items-center gap-2 text-[15px] font-semibold">
-          <Upload size={16} aria-hidden="true" /> Import
-        </h3>
-        <p className="mb-3 text-sm text-muted">Choose a Tickwell backup file. You will see what it contains before anything changes.</p>
+      <Block icon={<Upload size={18} aria-hidden="true" />} title="Import" description="Choose a Tickwell backup file. You will see what it contains before anything changes.">
         <input ref={fileRef} type="file" accept="application/json,.json" className="sr-only" id="backup-file" aria-label="Choose a backup file" onChange={(e) => void onFile(e.target.files?.[0])} />
         <Button icon={<Upload size={16} />} onClick={() => fileRef.current?.click()}>
           Choose backup file…
@@ -157,20 +167,18 @@ export function DataSection() {
             {error}
           </p>
         )}
-      </div>
+      </Block>
 
-      <div>
-        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="flex items-center gap-2 text-[15px] font-semibold">
-            <Archive size={16} aria-hidden="true" /> Restore points
-          </h3>
+      <Block
+        icon={<Archive size={18} aria-hidden="true" />}
+        title="Restore points"
+        description="Snapshots kept inside this browser. One is made automatically each day you use the app, and before every import, restore or reset. Clearing site data in your browser deletes them, so export a file for safety."
+        action={
           <Button size="sm" icon={<Database size={14} />} onClick={() => void createPoint()}>
             Save one now
           </Button>
-        </div>
-        <p className="mb-3 text-sm text-muted">
-          Snapshots kept inside this browser. One is made automatically each day you use the app, and before every import, restore or reset. Clearing site data in your browser deletes them, so export a file for safety.
-        </p>
+        }
+      >
         {backups.length === 0 ? (
           <p className="rounded-xl border border-dashed border-line/20 px-4 py-5 text-sm text-muted">No restore points yet.</p>
         ) : (
@@ -197,15 +205,13 @@ export function DataSection() {
             ))}
           </ul>
         )}
-      </div>
+      </Block>
 
-      <div className="rounded-xl border border-bad/30 p-4">
-        <h3 className="text-[15px] font-semibold text-bad">Erase everything</h3>
-        <p className="mb-3 mt-1 text-sm text-muted">Start completely fresh on this device.</p>
+      <Block icon={<Trash2 size={18} aria-hidden="true" />} tone="danger" title="Erase everything" description="Start completely fresh on this device.">
         <Button variant="danger" icon={<Trash2 size={16} />} onClick={() => void reset()}>
           Erase all data…
         </Button>
-      </div>
+      </Block>
 
       <Modal
         open={pending !== null}

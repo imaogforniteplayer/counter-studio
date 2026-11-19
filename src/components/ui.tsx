@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
-import { forwardRef, useEffect, useId, useRef, useState } from 'react';
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import { forwardRef, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { AlertTriangle, Check, ChevronDown, Info, X } from 'lucide-react';
 import { cx } from '../lib/cx';
 import { SWATCHES, gradientCss, isHex } from '../core/colors';
@@ -585,32 +585,15 @@ export function Toggle({
 }) {
   const id = useId();
   return (
-    <div className={cx('flex items-center justify-between gap-4 py-2.5', disabled && 'opacity-50')}>
+    <div className={cx('flex w-full items-center justify-between gap-4 py-3', disabled && 'opacity-50')}>
       <div className="min-w-0">
         <label htmlFor={id} className="block cursor-pointer text-[14.5px] font-medium">
           {label}
         </label>
-        {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
+        {description && <p className="mt-0.5 text-[13px] leading-snug text-muted">{description}</p>}
       </div>
-      <button
-        id={id}
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={cx(
-          'relative h-7 w-12 shrink-0 rounded-full border transition-colors duration-200',
-          checked ? 'border-transparent' : 'border-line/20 bg-raised',
-        )}
-        style={checked ? { background: 'linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent2)))' } : undefined}
-      >
-        <span
-          className={cx(
-            'absolute top-0.5 h-[22px] w-[22px] rounded-full bg-white shadow-md transition-transform duration-200',
-            checked ? 'translate-x-[22px]' : 'translate-x-0.5',
-          )}
-        />
+      <button id={id} type="button" role="switch" aria-checked={checked} disabled={disabled} onClick={() => onChange(!checked)} className="switch group shrink-0">
+        <span className="switch-knob" aria-hidden="true" />
       </button>
     </div>
   );
@@ -631,8 +614,38 @@ export function Segmented<T extends string>({
   size?: 'sm' | 'md';
   className?: string;
 }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [thumb, setThumb] = useState<{ left: number; width: number } | null>(null);
+  const [ready, setReady] = useState(false);
+
+  // The highlight slides to whichever option is chosen; it is measured so options can be any width.
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const place = () => {
+      const on = el.querySelector<HTMLElement>('[aria-checked="true"]');
+      setThumb(on ? { left: on.offsetLeft, width: on.offsetWidth } : null);
+    };
+    place();
+    if (typeof ResizeObserver === 'undefined') return;
+    const watcher = new ResizeObserver(place);
+    watcher.observe(el);
+    return () => watcher.disconnect();
+  }, [value, options.length]);
+  useEffect(() => {
+    const t = window.setTimeout(() => setReady(true), 50);
+    return () => window.clearTimeout(t);
+  }, []);
+
   return (
-    <div role="radiogroup" aria-label={ariaLabel} className={cx('inline-flex rounded-xl border border-line/15 bg-raised/60 p-0.5', className)}>
+    <div ref={box} role="radiogroup" aria-label={ariaLabel} className={cx('segmented relative inline-flex max-w-full rounded-xl border border-line/15 bg-raised/60 p-[3px]', className)}>
+      {thumb && (
+        <span
+          aria-hidden="true"
+          className={cx('segmented-thumb absolute bottom-[3px] top-[3px] rounded-[9px]', ready && 'segmented-thumb-anim')}
+          style={{ left: thumb.left, width: thumb.width }}
+        />
+      )}
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -643,9 +656,9 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.value)}
             className={cx(
-              'inline-flex items-center justify-center gap-1.5 rounded-[10px] font-medium transition-colors',
+              'relative z-10 inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[9px] font-medium transition-colors duration-200',
               size === 'sm' ? 'h-7 px-2.5 text-[12.5px]' : 'h-9 px-3.5 text-[13.5px]',
-              active ? 'bg-surface text-ink shadow-soft ring-1 ring-line/15' : 'text-muted hover:text-ink',
+              active ? 'text-ink' : 'text-muted hover:text-ink',
             )}
           >
             {o.icon}
@@ -665,6 +678,7 @@ export function Slider({
   onChange,
   label,
   format,
+  compact,
 }: {
   value: number;
   min: number;
@@ -673,26 +687,43 @@ export function Slider({
   onChange: (value: number) => void;
   label: string;
   format?: (value: number) => string;
+  /** Show only the track and the value, for use inside a settings row that already has the label. */
+  compact?: boolean;
 }) {
   const id = useId();
+  const shown = format ? format(value) : formatNumber(value);
+  const fill = `${Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))}%`;
+  const input = (
+    <input
+      id={id}
+      aria-label={compact ? label : undefined}
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="w-full min-w-0"
+      style={{ ['--fill' as string]: fill } as CSSProperties}
+    />
+  );
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3">
+        {input}
+        <span className="w-12 shrink-0 text-right text-[13px] font-medium tabular-nums text-muted">{shown}</span>
+      </div>
+    );
+  }
   return (
     <div className="py-1.5">
       <div className="mb-2 flex items-center justify-between">
         <label htmlFor={id} className="text-[14.5px] font-medium">
           {label}
         </label>
-        <span className="text-[13px] tabular-nums text-muted">{format ? format(value) : formatNumber(value)}</span>
+        <span className="text-[13px] tabular-nums text-muted">{shown}</span>
       </div>
-      <input
-        id={id}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full"
-      />
+      {input}
     </div>
   );
 }
