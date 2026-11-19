@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSettings, useStore, useToast } from '../../app/context';
 import { feedback } from '../../lib/feedback';
+import { startAlarm } from '../../lib/alarm';
 import { formatNumber } from '../../core/format';
 import type { ChangeKind } from '../../core/types';
 import type { BumpResult } from '../../data/store';
@@ -58,7 +59,12 @@ export function useCounting(counterId: string | null): Counting {
       }
       if (result.completed) {
         flash(setCelebrating, 650);
-        feedback(s, 'done');
+        if (c?.mode === 'countdown') {
+          // A finished countdown rings the alarm you chose in Settings, even when counter sounds are off.
+          startAlarm(s);
+        } else {
+          feedback(s, 'done');
+        }
         toast(c?.mode === 'countdown' ? 'Countdown finished.' : 'Goal reached.', 'success');
       }
     },

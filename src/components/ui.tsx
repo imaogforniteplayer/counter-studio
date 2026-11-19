@@ -551,19 +551,36 @@ export function Select<T extends string>({
 }: {
   value: T;
   onChange: (value: T) => void;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; group?: string }[];
   id?: string;
   className?: string;
   'aria-label'?: string;
 }) {
+  // Options that share a `group` are shown under one heading in the list.
+  const groups: { name: string | null; items: typeof options }[] = [];
+  for (const o of options) {
+    const name = o.group ?? null;
+    const last = groups[groups.length - 1];
+    if (last && last.name === name) last.items.push(o);
+    else groups.push({ name, items: [o] });
+  }
+  const renderOption = (o: (typeof options)[number]) => (
+    <option key={o.value} value={o.value}>
+      {o.label}
+    </option>
+  );
   return (
     <div className={cx('relative', className)}>
       <select id={id} value={value} onChange={(e) => onChange(e.target.value as T)} className="input appearance-none pr-9" {...rest}>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
+        {groups.map((g, i) =>
+          g.name ? (
+            <optgroup key={`${g.name}-${i}`} label={g.name}>
+              {g.items.map(renderOption)}
+            </optgroup>
+          ) : (
+            g.items.map(renderOption)
+          ),
+        )}
       </select>
       <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
     </div>

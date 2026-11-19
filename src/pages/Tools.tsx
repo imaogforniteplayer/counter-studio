@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Calculator, Clapperboard, Coins, Dices, Hash, Hourglass, Shuffle, Timer as TimerIcon, Copy, Flag, Pause, Play, RotateCcw } from 'lucide-react';
-import { useSettings, useToast } from '../app/context';
+import { Calculator, Clapperboard, Coins, Dices, Hash, Hourglass, Shuffle, Timer as TimerIcon, Copy, Flag, Pause, Play, RotateCcw, BellOff } from 'lucide-react';
+import { useSettings, useStore, useToast } from '../app/context';
 import { formatDuration, formatNumber } from '../core/format';
 import {
   MAX_DICE,
@@ -20,7 +20,10 @@ import {
   toMs,
 } from '../core/tools';
 import type { DiceRoll, DiceSpec, Lap } from '../core/tools';
-import { beep } from '../lib/feedback';
+import { startAlarm, stopAlarm } from '../lib/alarm';
+import type { AlarmHandle } from '../lib/alarm';
+import { AlarmPicker } from '../components/AlarmPicker';
+import { alarmInfo } from '../core/alarms';
 import { copyText } from '../lib/files';
 import { navigate, useRoute } from '../lib/router';
 import { cx } from '../lib/cx';
@@ -157,20 +160,35 @@ function CountdownTimer() {
   const [left, setLeft] = useState<number | null>(null); // paused time left
   const [total, setTotal] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [ringing, setRinging] = useState(false);
+  const store = useStore();
   const running = endAt !== null;
   const now = useTick(running, 100);
   const remaining = running ? Math.max(0, endAt - now) : left ?? toMs(toInt(h), toInt(m), toInt(s));
+  const ring = useRef<{ handle: AlarmHandle; timer: number } | null>(null);
+
+  const silence = () => {
+    if (ring.current) window.clearTimeout(ring.current.timer);
+    ring.current = null;
+    stopAlarm();
+    setRinging(false);
+  };
+  // Leaving the page stops the alarm.
+  useEffect(() => silence, []);
 
   useEffect(() => {
     if (running && remaining <= 0) {
       setEndAt(null);
       setLeft(0);
       setFinished(true);
-      beep(settings, 3);
+      const handle = startAlarm(settings);
+      setRinging(true);
+      ring.current = { handle, timer: window.setTimeout(() => setRinging(false), handle.seconds * 1000 + 300) };
     }
   }, [running, remaining, settings]);
 
   const start = () => {
+    silence();
     const ms = left && left > 0 ? left : toMs(toInt(h), toInt(m), toInt(s));
     if (ms <= 0) return;
     setTotal((t) => (left && left > 0 ? t : ms));
@@ -183,6 +201,7 @@ function CountdownTimer() {
     setEndAt(null);
   };
   const reset = () => {
+    silence();
     setEndAt(null);
     setLeft(null);
     setFinished(false);
@@ -197,15 +216,22 @@ function CountdownTimer() {
   const pct = total > 0 && !editing ? Math.min(100, ((total - remaining) / total) * 100) : 0;
 
   return (
-    <Panel title="Timer" description="Count down from a time you choose. A chime plays when it ends (your device volume applies).">
+    <Panel title="Timer" description="Count down from a time you choose. Your alarm sound plays when it ends, and the screen shows that time is up.">
       <BigReadout label={`Time left ${formatDuration(remaining)}`}>{formatDuration(remaining)}</BigReadout>
       <div className="h-1.5 overflow-hidden rounded-full bg-line/10" aria-hidden="true">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, rgb(var(--accent)), rgb(var(--accent2)))' }} />
       </div>
       {finished && (
-        <p className="text-center text-[15px] font-semibold text-good" role="status">
-          Time is up!
-        </p>
+        <div className={ringing ? 'alarm-pulse flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-good/40 bg-good/10 px-4 py-3' : 'flex flex-wrap items-center justify-center gap-3 px-4 py-3'}>
+          <p className="text-[16px] font-semibold text-good" role="status">
+            Time is up!
+          </p>
+          {ringing && (
+            <Button size="sm" variant="danger" icon={<BellOff size={15} />} onClick={silence}>
+              Stop alarm
+            </Button>
+          )}
+        </div>
       )}
       {editing && (
         <>
@@ -226,6 +252,11 @@ function CountdownTimer() {
                 {min} min
               </button>
             ))}
+          </div>
+          <div>
+            <p className="mb-1.5 text-[13px] font-medium text-muted">Alarm sound</p>
+            <AlarmPicker settings={settings} onChange={(alarmSound) => store.updateSettings({ alarmSound })} />
+            {alarmInfo(settings.alarmSound).group === 'quiet' && <p className="mt-2 text-[12.5px] text-muted">A quiet choice, suited to tests and classrooms.</p>}
           </div>
         </>
       )}

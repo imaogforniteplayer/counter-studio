@@ -6,6 +6,7 @@ import type { Settings } from '../core/types';
 import { isHex } from '../core/colors';
 import { DEFAULT_SETTINGS } from '../core/settings';
 import { canVibrate, feedback, previewSound } from '../lib/feedback';
+import { AlarmPicker } from '../components/AlarmPicker';
 import { imageToBackgroundDataUrl } from '../lib/image';
 import { useInstallPrompt } from '../lib/pwa';
 import { Logo } from '../components/Logo';
@@ -252,7 +253,7 @@ function SoundSection() {
   const vibrate = canVibrate();
 
   return (
-    <Section id="sound" title="Sound and touch" description="Optional feedback while you count. Sound is off until you switch it on." icon={<Volume2 size={19} />}>
+    <Section id="sound" title="Sound and touch" description="Counter sounds are off until you switch them on. Timer and countdown alarms have their own sound." icon={<Volume2 size={19} />}>
       <Toggle checked={s.soundEnabled} onChange={(soundEnabled) => set({ soundEnabled })} label="Sounds" description="A short sound for taps, limits and goals." />
       {s.soundEnabled && (
         <>
@@ -287,6 +288,17 @@ function SoundSection() {
           </Row>
         </>
       )}
+      <Row label="Timer and alarm sound" description="Plays when a timer or a countdown counter ends. It works even when counter sounds are off. Pick a quiet one for tests, or Silent for screen and vibration only." wide>
+        <div className="sm:w-[24rem] max-w-full">
+          <AlarmPicker settings={s} onChange={(alarmSound) => set({ alarmSound })} />
+        </div>
+      </Row>
+      <Row label="Alarm volume">
+        <Slider label="Alarm volume" compact value={s.alarmVolume} min={0.05} max={1} step={0.05} onChange={(alarmVolume) => set({ alarmVolume })} format={(v) => `${Math.round(v * 100)}%`} />
+      </Row>
+      <Row label="Alarm repeats" description="How many times the sound plays.">
+        <Slider label="Alarm repeats" compact value={s.alarmRepeats} min={1} max={10} step={1} onChange={(alarmRepeats) => set({ alarmRepeats })} format={(v) => `${v}×`} />
+      </Row>
       <Toggle
         checked={s.haptics}
         onChange={(haptics) => {

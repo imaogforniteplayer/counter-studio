@@ -5,7 +5,7 @@ export type FeedbackKind = 'tap' | 'dec' | 'limit' | 'done' | 'reset';
 
 let ctx: AudioContext | null = null;
 
-function audio(): AudioContext | null {
+export function audio(): AudioContext | null {
   try {
     if (!ctx) {
       const Ctor: typeof AudioContext | undefined =
@@ -76,7 +76,7 @@ function play(settings: Settings, kind: FeedbackKind): void {
   }
 }
 
-function buzz(pattern: number | number[]): void {
+export function buzz(pattern: number | number[]): void {
   try {
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(pattern);
   } catch {
@@ -102,12 +102,4 @@ export function feedback(settings: Settings, kind: FeedbackKind): void {
 /** Play a sound even if sounds are switched off, for the Settings preview button. */
 export function previewSound(settings: Settings, kind: FeedbackKind = 'tap'): void {
   play(settings, kind);
-}
-
-/** Beep for timers and alarms in Tools. Independent of the counter sound settings. */
-export function beep(settings: Settings, times = 1): void {
-  for (let i = 0; i < times; i++) {
-    window.setTimeout(() => play({ ...settings, soundPreset: 'chime', soundVolume: Math.max(0.4, settings.soundVolume) }, 'tap'), i * 260);
-  }
-  if (settings.haptics) buzz(times > 1 ? [120, 80, 120, 80, 200] : 120);
 }

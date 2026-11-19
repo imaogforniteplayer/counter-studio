@@ -395,6 +395,10 @@ body {
   from { background-position: -200% 0; }
   to { background-position: 200% 0; }
 }
+@keyframes alarm-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--good) / 0.45); background-color: rgb(var(--good) / 0.1); }
+  50% { box-shadow: 0 0 0 10px rgb(var(--good) / 0); background-color: rgb(var(--good) / 0.22); }
+}
 @keyframes ripple {
   from { transform: scale(0.55); opacity: 0.9; }
   to { transform: scale(1.08); opacity: 0; }
@@ -457,6 +461,7 @@ body {
 .stagger > *:nth-child(5) { animation-delay: 200ms; }
 .stagger > *:nth-child(6) { animation-delay: 250ms; }
 .stagger > *:nth-child(n + 7) { animation-delay: 300ms; }
+.alarm-pulse { animation: alarm-pulse 0.9s ease-in-out infinite; }
 .nav-bar { animation: nav-in 0.3s var(--ease-spring) both; transform-origin: center; }
 .toast-in { animation: toast-in 0.4s var(--ease-spring) both; }
 .sheet-in { animation: sheet-in 0.38s var(--ease-out) backwards; }

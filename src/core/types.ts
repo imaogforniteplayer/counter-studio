@@ -110,6 +110,7 @@ export type ButtonStyle = 'round' | 'soft' | 'pill' | 'square';
 export type ThemeChoice = 'dark' | 'light' | 'system';
 export type BackgroundChoice = 'none' | 'aurora' | 'grid' | 'dusk' | 'color' | 'image';
 export type SoundPreset = 'click' | 'tick' | 'pop' | 'chime';
+export type AlarmSound = 'softbell' | 'gentle' | 'single' | 'nudge' | 'silent' | 'classic' | 'digital' | 'rising' | 'melody' | 'siren';
 
 export interface Settings {
   theme: ThemeChoice;
@@ -129,6 +130,9 @@ export interface Settings {
   soundPreset: SoundPreset;
   soundVolume: number;
   soundPitch: number;
+  alarmSound: AlarmSound;
+  alarmVolume: number;
+  alarmRepeats: number;
   haptics: boolean;
   holdToCount: boolean;
   holdSpeed: number;

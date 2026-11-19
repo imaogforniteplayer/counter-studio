@@ -1,6 +1,7 @@
 import type { Settings } from './types';
 import { isHex, findSwatch } from './colors';
 import { arr, bool, isRecord, num, oneOf, str } from './sanitize';
+import { ALARM_IDS } from './alarms';
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
@@ -20,6 +21,9 @@ export const DEFAULT_SETTINGS: Settings = {
   soundPreset: 'click',
   soundVolume: 0.5,
   soundPitch: 1,
+  alarmSound: 'softbell',
+  alarmVolume: 0.7,
+  alarmRepeats: 3,
   haptics: true,
   holdToCount: true,
   holdSpeed: 1,
@@ -68,6 +72,9 @@ export function sanitizeSettings(raw: unknown): Settings {
     soundPreset: oneOf(raw.soundPreset, ['click', 'tick', 'pop', 'chime'] as const, d.soundPreset),
     soundVolume: num(raw.soundVolume, d.soundVolume, 0, 1),
     soundPitch: num(raw.soundPitch, d.soundPitch, 0.5, 2),
+    alarmSound: oneOf(raw.alarmSound, ALARM_IDS, d.alarmSound),
+    alarmVolume: num(raw.alarmVolume, d.alarmVolume, 0, 1),
+    alarmRepeats: Math.round(num(raw.alarmRepeats, d.alarmRepeats, 1, 10)),
     haptics: bool(raw.haptics, d.haptics),
     holdToCount: bool(raw.holdToCount, d.holdToCount),
     holdSpeed: num(raw.holdSpeed, d.holdSpeed, 0.5, 3),
