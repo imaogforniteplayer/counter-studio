@@ -22,7 +22,8 @@ export default {
         num: ['var(--font-num)'],
       },
       boxShadow: {
-        soft: '0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 8px 24px -12px rgb(0 0 0 / 0.5)',
+        soft: 'var(--shadow-soft)',
+        pop: 'var(--shadow-pop)',
         glow: '0 0 0 1px rgb(var(--accent) / 0.4), 0 10px 40px -10px rgb(var(--accent) / 0.55)',
       },
       keyframes: {
@@ -40,7 +41,7 @@ export default {
         },
       },
       animation: {
-        'fade-up': 'fade-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both',
+        'fade-up': 'fade-up 0.36s cubic-bezier(0.22, 1, 0.36, 1) backwards',
         'pop-in': 'pop-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both',
         shimmer: 'shimmer 1.6s linear infinite',
       },

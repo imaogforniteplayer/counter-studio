@@ -85,13 +85,13 @@ export function Nav({ current }: { current: string }) {
                   aria-current={active ? 'page' : undefined}
                   title={item.label}
                   className={cx(
-                    'group relative flex h-11 items-center gap-3 rounded-xl px-3 text-[14.5px] font-medium transition-colors',
+                    'group relative flex h-11 items-center gap-3 rounded-xl px-3 text-[14.5px] font-medium transition-[color,background-color,box-shadow] duration-200',
                     'justify-center lg:justify-start',
-                    active ? 'bg-accent/15 text-ink' : 'text-muted hover:bg-line/10 hover:text-ink',
+                    active ? 'bg-gradient-to-r from-accent/20 to-accent/5 text-ink shadow-[inset_0_0_0_1px_rgb(var(--accent)/0.22)]' : 'text-muted hover:bg-line/10 hover:text-ink',
                   )}
                 >
-                  {active && <span className="absolute -left-3 h-5 w-1 rounded-r-full bg-accent lg:-left-4" aria-hidden="true" />}
-                  <Icon size={19} strokeWidth={active ? 2.3 : 2} className={active ? 'text-accent' : undefined} aria-hidden="true" />
+                  {active && <span className="nav-bar absolute -left-3 h-6 w-1 rounded-r-full bg-gradient-to-b from-accent to-accent2 lg:-left-4" aria-hidden="true" />}
+                  <Icon size={19} strokeWidth={active ? 2.3 : 2} className={cx('transition-transform duration-300 [transition-timing-function:var(--ease-spring)] group-hover:scale-110', active && 'text-accent')} aria-hidden="true" />
                   <span className="hidden lg:inline">{item.label}</span>
                   <span className="sr-only lg:hidden">{item.label}</span>
                 </a>
@@ -116,9 +116,11 @@ export function Nav({ current }: { current: string }) {
                 <a
                   href={href(item.path)}
                   aria-current={active ? 'page' : undefined}
-                  className={cx('flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium', active ? 'text-ink' : 'text-muted')}
+                  className={cx('group flex h-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors', active ? 'text-ink' : 'text-muted')}
                 >
-                  <Icon size={21} strokeWidth={active ? 2.4 : 2} className={active ? 'text-accent' : undefined} aria-hidden="true" />
+                  <span className={cx('grid h-8 w-14 place-items-center rounded-full transition-[background-color,transform] duration-300 [transition-timing-function:var(--ease-spring)] group-active:scale-90', active ? 'bg-accent/20' : 'bg-transparent')}>
+                    <Icon size={21} strokeWidth={active ? 2.4 : 2} className={active ? 'text-accent' : undefined} aria-hidden="true" />
+                  </span>
                   {item.label === 'My Counters' ? 'Counters' : item.label}
                 </a>
               </li>
@@ -129,9 +131,11 @@ export function Nav({ current }: { current: string }) {
               type="button"
               onClick={() => setMore(true)}
               aria-haspopup="dialog"
-              className={cx('flex h-full w-full flex-col items-center justify-center gap-1 text-[11px] font-medium', moreActive ? 'text-ink' : 'text-muted')}
+              className={cx('group flex h-full w-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors', moreActive ? 'text-ink' : 'text-muted')}
             >
-              <MoreHorizontal size={21} className={moreActive ? 'text-accent' : undefined} aria-hidden="true" />
+              <span className={cx('grid h-8 w-14 place-items-center rounded-full transition-[background-color,transform] duration-300 [transition-timing-function:var(--ease-spring)] group-active:scale-90', moreActive ? 'bg-accent/20' : 'bg-transparent')}>
+                <MoreHorizontal size={21} className={moreActive ? 'text-accent' : undefined} aria-hidden="true" />
+              </span>
               More
             </button>
           </li>

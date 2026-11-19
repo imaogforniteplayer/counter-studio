@@ -127,7 +127,7 @@ export function CounterCard({ counter, view = 'grid', onOpen, onBump, menu, arti
   return (
     <article
       {...articleProps}
-      className={cx('relative flex flex-col gap-4 p-5 transition-[transform,box-shadow] duration-200', onOpen && 'hover:-translate-y-0.5', look.className, highlight && 'ring-2 ring-accent', className)}
+      className={cx('relative flex flex-col gap-4 p-5', onOpen && 'card-link', look.className, highlight && 'ring-2 ring-accent', className)}
       style={{ ...stageVars(counter.color), ...look.style }}
     >
       <div className="flex items-start gap-3">

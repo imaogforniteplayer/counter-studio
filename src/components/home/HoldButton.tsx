@@ -1,4 +1,6 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useState } from 'react';
+import type { CSSProperties, PointerEvent, ReactNode } from 'react';
+import { cx } from '../../lib/cx';
 import { useSettings } from '../../app/context';
 import { useHold } from './useHold';
 
@@ -31,9 +33,16 @@ export function HoldButton({
     speed: settings.holdSpeed,
     disabled,
   });
+  // Each press starts a fresh ring (a new key restarts the animation).
+  const [presses, setPresses] = useState(0);
+  const begin = (e: PointerEvent<HTMLElement>) => {
+    if (!disabled) setPresses((n) => n + 1);
+    handlers.onPointerDown(e);
+  };
   return (
-    <button type="button" aria-label={label} disabled={disabled} className={className} style={style} {...handlers}>
+    <button type="button" aria-label={label} disabled={disabled} className={cx('hold-btn', className)} style={style} {...handlers} onPointerDown={begin}>
       {children}
+      {presses > 0 && <span key={presses} className="ripple" aria-hidden="true" />}
     </button>
   );
 }

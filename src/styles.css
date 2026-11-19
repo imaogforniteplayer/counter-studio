@@ -20,6 +20,11 @@
   --accent2: 255 77 94;
   --onaccent: 16 14 20;
   --shadow-ink: 0 0 0;
+  --shadow-soft: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 30px -16px rgb(0 0 0 / 0.7);
+  --shadow-pop: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 30px 70px -24px rgb(0 0 0 / 0.85), 0 10px 24px -12px rgb(0 0 0 / 0.55);
+  --sheen: rgb(255 255 255 / 0.045);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --font-ui: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-num: var(--font-ui);
   --num-weight: 650;
@@ -41,6 +46,9 @@
   --good: 22 134 78;
   --bad: 201 42 42;
   --shadow-ink: 60 40 20;
+  --shadow-soft: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(var(--shadow-ink) / 0.08), 0 14px 32px -18px rgb(var(--shadow-ink) / 0.3);
+  --shadow-pop: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 30px 70px -26px rgb(var(--shadow-ink) / 0.45), 0 10px 24px -14px rgb(var(--shadow-ink) / 0.3);
+  --sheen: rgb(255 255 255 / 0.5);
 }
 
 [data-numfont='mono'] {
@@ -144,30 +152,57 @@ body {
 /* ------------------------------------------------------------------ */
 @layer components {
   .card {
-    @apply rounded-2xl border border-line/10 bg-surface/80 shadow-soft backdrop-blur-sm;
+    @apply rounded-2xl border border-line/10 bg-surface/80 backdrop-blur-sm;
+    background-image: linear-gradient(180deg, var(--sheen), transparent 38%);
+    box-shadow: var(--shadow-soft);
   }
   .card-solid {
-    @apply rounded-2xl border border-line/10 bg-surface shadow-soft;
+    @apply rounded-2xl border border-line/10 bg-surface;
+    background-image: linear-gradient(180deg, var(--sheen), transparent 38%);
+    box-shadow: var(--shadow-soft);
   }
   .glass {
-    @apply rounded-2xl border border-line/15 bg-surface/50 shadow-soft backdrop-blur-xl;
+    @apply rounded-2xl border border-line/15 bg-surface/50 backdrop-blur-xl;
+    box-shadow: var(--shadow-soft);
   }
   .hairline {
     @apply border-line/10;
   }
+  /* Cards that open something lift a little when you point at them. */
+  .card-link {
+    transition: transform 0.25s var(--ease-out), border-color 0.2s, box-shadow 0.25s var(--ease-out);
+  }
+  .card-link:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--accent) / 0.35);
+    box-shadow: var(--shadow-pop);
+  }
 
   .input {
-    @apply w-full rounded-xl border border-line/15 bg-raised/70 px-3.5 py-2.5 text-[15px] text-ink placeholder:text-muted/70
-      transition-colors hover:border-line/25 focus:border-accent/70 focus:outline-none focus:ring-2 focus:ring-accent/25;
+    @apply w-full rounded-xl border border-line/15 bg-raised/70 px-3.5 py-2.5 text-[15px] text-ink placeholder:text-muted/70 focus:outline-none;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.18);
+    transition: border-color 0.18s, box-shadow 0.22s var(--ease-out), background-color 0.18s;
+  }
+  .input:hover {
+    border-color: rgb(var(--line) / 0.28);
+  }
+  .input:focus {
+    border-color: rgb(var(--accent) / 0.75);
+    background-color: rgb(var(--raised) / 0.95);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.12), 0 0 0 4px rgb(var(--accent) / 0.16);
   }
   .input:disabled {
     @apply cursor-not-allowed opacity-50;
   }
 
   .btn {
-    @apply inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-transparent font-medium
-      transition-[transform,background-color,border-color,box-shadow,opacity] duration-150 active:scale-[0.97]
-      disabled:pointer-events-none disabled:opacity-45;
+    @apply inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-transparent font-medium disabled:pointer-events-none disabled:opacity-45;
+    transition: transform 0.18s var(--ease-spring), background-color 0.18s, border-color 0.18s, box-shadow 0.22s var(--ease-out), filter 0.18s, color 0.18s;
+    will-change: transform;
+  }
+  .btn:active {
+    transform: translateY(0) scale(0.96);
+    transition-duration: 0.06s;
   }
   .btn-sm {
     @apply h-8 px-3 text-[13px];
@@ -179,26 +214,82 @@ body {
     @apply h-12 px-6 text-base;
   }
   .btn-primary {
-    @apply text-onaccent shadow-glow hover:brightness-110;
-    background: linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent2)));
+    color: rgb(var(--onaccent));
+    font-weight: 600;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.26), rgb(255 255 255 / 0) 52%),
+      linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent2)));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      inset 0 -1px 0 rgb(0 0 0 / 0.16),
+      0 0 0 1px rgb(var(--accent) / 0.55),
+      0 2px 4px rgb(0 0 0 / 0.25),
+      0 10px 24px -10px rgb(var(--accent) / 0.65);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.07) saturate(1.05);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      inset 0 -1px 0 rgb(0 0 0 / 0.16),
+      0 0 0 1px rgb(var(--accent) / 0.6),
+      0 3px 6px rgb(0 0 0 / 0.25),
+      0 16px 32px -10px rgb(var(--accent) / 0.75);
+  }
+  .btn-primary:active {
+    filter: brightness(0.97);
+    box-shadow:
+      inset 0 2px 4px rgb(0 0 0 / 0.2),
+      0 0 0 1px rgb(var(--accent) / 0.55),
+      0 4px 10px -6px rgb(var(--accent) / 0.6);
   }
   .btn-secondary {
-    @apply border-line/15 bg-raised text-ink hover:border-line/30 hover:bg-raised/70;
+    color: rgb(var(--ink));
+    border-color: rgb(var(--line) / 0.14);
+    background: linear-gradient(180deg, rgb(var(--raised) / 1), rgb(var(--raised) / 0.72));
+    box-shadow: inset 0 1px 0 var(--sheen), 0 1px 2px rgb(0 0 0 / 0.22);
+  }
+  .btn-secondary:hover {
+    transform: translateY(-1px);
+    border-color: rgb(var(--accent) / 0.4);
+    box-shadow: inset 0 1px 0 var(--sheen), 0 8px 18px -10px rgb(0 0 0 / 0.55), 0 0 0 3px rgb(var(--accent) / 0.08);
+  }
+  .btn-secondary:active {
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.22);
   }
   .btn-ghost {
-    @apply text-muted hover:bg-line/10 hover:text-ink;
+    @apply text-muted;
+  }
+  .btn-ghost:hover {
+    background: rgb(var(--line) / 0.09);
+    color: rgb(var(--ink));
   }
   .btn-danger {
-    @apply border-bad/40 bg-bad/10 text-bad hover:bg-bad/20;
+    @apply border-bad/40 bg-bad/10 text-bad;
+  }
+  .btn-danger:hover {
+    background: rgb(var(--bad) / 0.2);
+    border-color: rgb(var(--bad) / 0.6);
+    box-shadow: 0 8px 20px -10px rgb(var(--bad) / 0.6);
   }
 
   .chip {
-    @apply inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line/15 bg-raised/60 px-3 py-1 text-[13px] text-muted
-      transition-colors hover:border-line/30 hover:text-ink;
+    @apply inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line/15 bg-raised/60 px-3 py-1 text-[13px] text-muted;
+    transition: color 0.18s, border-color 0.18s, background-color 0.2s, box-shadow 0.25s var(--ease-out), transform 0.18s var(--ease-spring);
+  }
+  .chip:hover {
+    border-color: rgb(var(--line) / 0.32);
+    color: rgb(var(--ink));
+  }
+  .chip:active {
+    transform: scale(0.95);
   }
   .chip[aria-pressed='true'],
   .chip[data-active='true'] {
-    @apply border-accent/60 bg-accent/15 text-ink;
+    color: rgb(var(--ink));
+    border-color: rgb(var(--accent) / 0.65);
+    background: linear-gradient(135deg, rgb(var(--accent) / 0.22), rgb(var(--accent2) / 0.12));
+    box-shadow: 0 6px 16px -8px rgb(var(--accent) / 0.7);
   }
 
   .eyebrow {
@@ -217,35 +308,49 @@ body {
   font-size: calc(var(--num-size, 7rem) * var(--num-scale, 1) * var(--num-fit, 1));
 }
 
-/* The big round count button. */
+/* The big count button: a machined key with a bezel ring, a lit top edge and a deep press. */
 .count-btn {
   width: var(--count-size, 11rem);
   height: calc(var(--count-size, 11rem) / var(--btn-aspect));
   aspect-ratio: var(--btn-aspect) / 1;
   border-radius: var(--btn-radius);
-  background: linear-gradient(145deg, rgb(var(--accent)), rgb(var(--accent2)));
+  background:
+    radial-gradient(110% 90% at 28% 12%, rgb(255 255 255 / 0.42), rgb(255 255 255 / 0) 46%),
+    linear-gradient(150deg, rgb(var(--accent)), rgb(var(--accent2)));
   color: rgb(var(--onaccent));
   box-shadow:
-    0 0 0 1px rgb(var(--accent) / 0.5),
-    0 18px 50px -14px rgb(var(--accent) / 0.65),
-    inset 0 2px 0 rgb(255 255 255 / 0.28),
-    inset 0 -6px 14px rgb(0 0 0 / 0.14);
-  transition: transform 0.12s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s, filter 0.2s;
+    0 0 0 1px rgb(var(--accent) / 0.6),
+    0 0 0 9px rgb(var(--accent) / 0.08),
+    0 0 0 10px rgb(var(--accent) / 0.14),
+    0 30px 60px -20px rgb(var(--accent) / 0.7),
+    inset 0 2px 0 rgb(255 255 255 / 0.5),
+    inset 0 -12px 24px rgb(0 0 0 / 0.2);
+  transition: transform 0.28s var(--ease-spring), box-shadow 0.3s var(--ease-out), filter 0.2s;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
 }
 .count-btn:hover {
-  filter: brightness(1.06);
+  filter: brightness(1.05) saturate(1.05);
+  box-shadow:
+    0 0 0 1px rgb(var(--accent) / 0.7),
+    0 0 0 12px rgb(var(--accent) / 0.1),
+    0 0 0 13px rgb(var(--accent) / 0.2),
+    0 36px 70px -20px rgb(var(--accent) / 0.8),
+    inset 0 2px 0 rgb(255 255 255 / 0.55),
+    inset 0 -12px 24px rgb(0 0 0 / 0.2);
 }
 .count-btn:active,
 .count-btn[data-pressed='true'] {
-  transform: scale(0.95);
+  transform: scale(0.94);
+  transition-duration: 0.08s;
   box-shadow:
-    0 0 0 1px rgb(var(--accent) / 0.5),
-    0 8px 24px -10px rgb(var(--accent) / 0.6),
-    inset 0 2px 0 rgb(255 255 255 / 0.2),
-    inset 0 -3px 10px rgb(0 0 0 / 0.18);
+    0 0 0 1px rgb(var(--accent) / 0.6),
+    0 0 0 5px rgb(var(--accent) / 0.1),
+    0 0 0 6px rgb(var(--accent) / 0.16),
+    0 10px 24px -12px rgb(var(--accent) / 0.6),
+    inset 0 4px 14px rgb(0 0 0 / 0.28),
+    inset 0 -2px 0 rgb(255 255 255 / 0.18);
 }
 .count-btn-secondary {
   width: var(--sub-size, 4.5rem);
@@ -256,16 +361,51 @@ body {
   -webkit-user-select: none;
 }
 
+/* Anything that counts on press gets a ring that rolls out from the button. */
+.hold-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ripple {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 3px rgb(255 255 255 / 0.55), inset 0 0 28px rgb(255 255 255 / 0.25);
+  animation: ripple 0.55s var(--ease-out) both;
+}
+
 /* ------------------------------------------------------------------ */
 /* Animation                                                           */
 /* ------------------------------------------------------------------ */
 @keyframes digit-up {
-  from { transform: translateY(0.38em); opacity: 0; filter: blur(3px); }
-  to { transform: translateY(0); opacity: 1; filter: blur(0); }
+  from { transform: translateY(0.45em) scale(0.92); opacity: 0; filter: blur(4px); }
+  to { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
 }
 @keyframes digit-down {
-  from { transform: translateY(-0.38em); opacity: 0; filter: blur(3px); }
-  to { transform: translateY(0); opacity: 1; filter: blur(0); }
+  from { transform: translateY(-0.45em) scale(0.92); opacity: 0; filter: blur(4px); }
+  to { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+@keyframes ripple {
+  from { transform: scale(0.55); opacity: 0.9; }
+  to { transform: scale(1.08); opacity: 0; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes nav-in {
+  from { transform: scaleY(0.2); opacity: 0; }
+  to { transform: scaleY(1); opacity: 1; }
 }
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -279,8 +419,8 @@ body {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes sheet-in {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(28px) scale(0.98); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes overlay-in {
   from { opacity: 0; }
@@ -303,14 +443,23 @@ body {
   display: inline-block;
   will-change: transform, opacity;
 }
-.digit-up { animation: digit-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.digit-down { animation: digit-down 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.digit-up { animation: digit-up 0.34s var(--ease-spring) both; }
+.digit-down { animation: digit-down 0.34s var(--ease-spring) both; }
 .shake { animation: shake 0.35s ease-in-out; }
 .celebrate { animation: celebrate 0.6s ease-out; }
 .coin { animation: coin-flip 0.6s cubic-bezier(0.3, 0.7, 0.3, 1) both; }
-.page-enter { animation: fade-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.toast-in { animation: toast-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.sheet-in { animation: sheet-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.page-enter { animation: fade-up 0.36s var(--ease-out) backwards; }
+/* Lists of cards settle in one after another the first time a page opens. */
+.stagger > * { animation: rise 0.5s var(--ease-out) backwards; }
+.stagger > *:nth-child(2) { animation-delay: 50ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 150ms; }
+.stagger > *:nth-child(5) { animation-delay: 200ms; }
+.stagger > *:nth-child(6) { animation-delay: 250ms; }
+.stagger > *:nth-child(n + 7) { animation-delay: 300ms; }
+.nav-bar { animation: nav-in 0.3s var(--ease-spring) both; transform-origin: center; }
+.toast-in { animation: toast-in 0.4s var(--ease-spring) both; }
+.sheet-in { animation: sheet-in 0.38s var(--ease-out) backwards; }
 .overlay-in { animation: overlay-in 0.18s ease-out both; }
 .spinner { animation: spin 0.8s linear infinite; }
 .skeleton {
