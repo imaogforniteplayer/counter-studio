@@ -199,6 +199,15 @@ describe('sanitizeCounter', () => {
   });
 });
 
+describe('locked flag', () => {
+  it('defaults to unlocked and keeps a true value through sanitizing', () => {
+    expect(createCounter({ name: 'A' }).locked).toBe(false);
+    expect(sanitizeCounter({ name: 'A', locked: true })!.locked).toBe(true);
+    expect(sanitizeCounter({ name: 'A', locked: 'yes' })!.locked).toBe(false);
+    expect(sanitizeCounter({ name: 'A' })!.locked).toBe(false);
+  });
+});
+
 describe('config and snapshots', () => {
   it('round-trips a configuration into a fresh counter with new ids', () => {
     const src = createCounter({ name: 'Match', mode: 'score', value: 0 });

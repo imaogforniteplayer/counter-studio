@@ -9,11 +9,13 @@ Dark mode by default, light mode, installable, and it works offline.
 
 - **Seven counter modes:** Normal, Countdown, Goal, Score (players), Tally (groups of five), Interval (automatic counting) and Multi (several sub-counters).
 - **Counting:** big tap targets, hold to repeat, quick-add amounts, undo and redo per counter, full-screen mode, keep-screen-awake while counting full screen.
+- **Lock a counter:** stop accidental taps, typing, resets and undo until you unlock it (menu, the `L` key, or the Locked chip on Home).
+- **Command palette:** press `Ctrl+K` (`⌘K` on a Mac) or use the Search button to jump to any page or counter, start a tool, switch theme or create a counter.
 - **Organise:** multiple counters, folders, pinning, search, grid or list, drag to reorder, trash with restore.
 - **Templates:** built-in ready-made counters, plus save your own.
-- **Statistics:** time range and per-counter views, charts (activity over time, weekday, hour of day), streaks, goals reached, sessions, comparisons with the previous period.
+- **Statistics:** time range and per-counter views, charts (activity over time, weekday, hour of day), a daily activity calendar (heatmap), streaks, goals reached, sessions, comparisons with the previous period.
 - **History:** every change logged, searchable and filterable, revert a single change, export to CSV.
-- **Tools:** stopwatch with laps, timer, dice, coin flip, random number, name picker/shuffle, tap tempo, pace calculator.
+- **Tools:** stopwatch with laps, timer with ten alarm sounds, focus (Pomodoro) timer that can add one to a counter for each finished session, dice, coin flip, random number, name picker/shuffle, tap tempo, pace calculator.
 - **Data:** JSON backup export and import (merge or replace), CSV export, automatic daily restore points kept in the browser, and restore or reset.
 - **Sharing:** share a counter as a link or QR code. The counter's settings are inside the link itself.
 - **Customise:** accent colours (including custom), background styles or your own picture, number fonts, button shapes, card styles, compact mode, sounds, vibration, reduced motion.
@@ -30,7 +32,7 @@ Dark mode by default, light mode, installable, and it works offline.
 
 ## Keyboard shortcuts
 
-`Space`/`↑`/`+` add · `↓`/`-` subtract · `Z` undo · `Shift+Z`/`Y` redo · `R` reset · `F` full screen · `E` edit · `A` toggle auto-count · `[` `]` previous or next counter · `N` new counter · `Alt+1…7` pages · `?` help.
+`Space`/`↑`/`+` add · `↓`/`-` subtract · `Z` undo · `Shift+Z`/`Y` redo · `R` reset · `F` full screen · `E` edit · `A` toggle auto-count · `[` `]` previous or next counter · `L` lock or unlock · `N` new counter · `Ctrl/⌘+K` command palette · `Alt+1…7` pages · `?` help.
 
 ## Development
 

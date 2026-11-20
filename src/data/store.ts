@@ -68,6 +68,8 @@ export interface BumpResult {
   hit: 'min' | 'max' | null;
   completed: boolean;
   value: number;
+  /** True when nothing changed because the counter is locked. */
+  locked?: boolean;
 }
 
 export interface StoreOptions {
@@ -327,6 +329,7 @@ export class Store {
   bump(id: string, direction: 1 | -1, amount?: number, kind?: ChangeKind): BumpResult | null {
     const c = this.findLive(id);
     if (!c) return null;
+    if (c.locked && kind !== 'auto') return { delta: 0, hit: null, completed: false, value: c.value, locked: true };
     const amt = amount ?? c.step;
     if (!Number.isFinite(amt) || amt <= 0) return null;
     const out = applyDelta(c.value, direction * amt, c.min, c.max);
@@ -354,6 +357,7 @@ export class Store {
     const item = player ?? sub;
     if (!item) return null;
     const current = player ? player.score : (sub as NonNullable<typeof sub>).value;
+    if (c.locked) return { delta: 0, hit: null, completed: false, value: current, locked: true };
     const amt = amount ?? c.step;
     if (!Number.isFinite(amt) || amt <= 0) return null;
     const out = applyDelta(current, direction * amt, c.min, c.max);
@@ -377,6 +381,7 @@ export class Store {
   setValue(id: string, raw: number): BumpResult | null {
     const c = this.findLive(id);
     if (!c || !Number.isFinite(raw)) return null;
+    if (c.locked) return { delta: 0, hit: null, completed: false, value: c.value, locked: true };
     const next = clampValue(raw, c.min, c.max);
     const hit: 'min' | 'max' | null = raw > next ? 'max' : raw < next ? 'min' : null;
     if (next === c.value) return { delta: 0, hit, completed: false, value: c.value };
@@ -401,6 +406,7 @@ export class Store {
     const item = player ?? sub;
     if (!item) return null;
     const current = player ? player.score : (sub as NonNullable<typeof sub>).value;
+    if (c.locked) return { delta: 0, hit: null, completed: false, value: current, locked: true };
     const next = clampValue(raw, c.min, c.max);
     if (next === current) return { delta: 0, hit: null, completed: false, value: current };
     const delta = roundNum(next - current);
@@ -413,6 +419,7 @@ export class Store {
 
   /** Back to the starting value (or zero for scoreboards and multi-counters). */
   reset(id: string): boolean {
+    if (this.findLive(id)?.locked) return false;
     const result = this.commit(id, (c) => {
       if (c.mode === 'score' || c.mode === 'multi') {
         const zero = clampValue(0, c.min, c.max);
@@ -474,7 +481,7 @@ export class Store {
   undo(id: string): boolean {
     const c = this.findLive(id);
     const stack = this.stacks.get(id);
-    if (!c || !stack) return false;
+    if (!c || !stack || c.locked) return false;
     const snap = stack.undo(snapshotOf(c));
     if (!snap) return false;
     this.applySnapshot(id, snap, 'Undo');
@@ -484,7 +491,7 @@ export class Store {
   redo(id: string): boolean {
     const c = this.findLive(id);
     const stack = this.stacks.get(id);
-    if (!c || !stack) return false;
+    if (!c || !stack || c.locked) return false;
     const snap = stack.redo(snapshotOf(c));
     if (!snap) return false;
     this.applySnapshot(id, snap, 'Redo');
@@ -492,11 +499,12 @@ export class Store {
   }
 
   /** Undo one specific change from the history by applying its opposite. */
-  revertEntry(entryId: string): 'ok' | 'unavailable' | 'blocked' {
+  revertEntry(entryId: string): 'ok' | 'unavailable' | 'blocked' | 'locked' {
     const entry = this.state.history.find((h) => h.id === entryId);
     if (!entry || !canRevertEntry(entry, this.state.counters)) return 'unavailable';
     const c = this.findLive(entry.counterId);
     if (!c) return 'unavailable';
+    if (c.locked) return 'locked';
     const player = entry.target ? c.players.find((p) => p.id === entry.target) : undefined;
     const sub = entry.target ? c.subCounters.find((s) => s.id === entry.target) : undefined;
     const current = entry.target === null ? c.value : player ? player.score : sub ? sub.value : null;
@@ -574,6 +582,7 @@ export class Store {
       id: uid('c'),
       name: str(`${c.name} (copy)`, 80),
       pinned: false,
+      locked: false,
       order: minOrder - 1,
       players: c.players.map((p) => ({ ...p, id: uid('p') })),
       subCounters: c.subCounters.map((s) => ({ ...s, id: uid('s') })),
@@ -656,6 +665,16 @@ export class Store {
     this.set({ counters: this.state.counters.map((x) => (x.id === id ? next : x)) });
     this.queue(this.putCounter(next));
     return next.pinned;
+  }
+
+  /** Lock or unlock a counter. Returns the new state, or null when the counter is gone. */
+  toggleLock(id: string): boolean | null {
+    const c = this.findLive(id);
+    if (!c) return null;
+    const next = { ...c, locked: !c.locked, updatedAt: this.now() };
+    this.set({ counters: this.state.counters.map((x) => (x.id === id ? next : x)) });
+    this.queue(this.putCounter(next));
+    return next.locked;
   }
 
   moveToFolder(id: string, folderId: string | null): void {

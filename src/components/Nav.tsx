@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { BarChart3, History, Home, LayoutGrid, LayoutTemplate, MoreHorizontal, Settings, Wrench } from 'lucide-react';
+import { BarChart3, History, Home, LayoutGrid, LayoutTemplate, MoreHorizontal, Search, Settings, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAppState } from '../app/context';
 import { href } from '../lib/router';
+import { openCommandPalette } from '../lib/palette';
 import { cx } from '../lib/cx';
 import { Logo } from './Logo';
 import { Modal } from './ui';
@@ -74,6 +75,18 @@ export function Nav({ current }: { current: string }) {
           </span>
         </a>
 
+        <button
+          type="button"
+          onClick={openCommandPalette}
+          aria-label="Search and commands"
+          title="Search and commands (Ctrl+K)"
+          className="mb-4 flex h-10 items-center justify-center gap-2.5 rounded-xl border border-line/15 bg-raised/50 px-3 text-[13.5px] text-muted transition-colors hover:border-line/30 hover:text-ink lg:justify-start"
+        >
+          <Search size={16} aria-hidden="true" />
+          <span className="hidden lg:inline">Search</span>
+          <kbd className="ml-auto hidden rounded-md border border-line/20 px-1.5 py-0.5 font-sans text-[11px] lg:inline">Ctrl K</kbd>
+        </button>
+
         <ul className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const active = isActive(current, item.path);
@@ -143,6 +156,17 @@ export function Nav({ current }: { current: string }) {
       </nav>
 
       <Modal open={more} onClose={() => setMore(false)} title="More" size="sm">
+        <button
+          type="button"
+          className="mb-3 flex h-12 w-full items-center gap-3 rounded-xl border border-line/15 bg-raised/50 px-3 text-[15px] font-medium"
+          onClick={() => {
+            setMore(false);
+            window.setTimeout(openCommandPalette, 60);
+          }}
+        >
+          <Search size={20} className="text-muted" aria-hidden="true" />
+          Search and commands
+        </button>
         <ul className="space-y-1">
           {secondary.map((item) => {
             const Icon = item.icon;

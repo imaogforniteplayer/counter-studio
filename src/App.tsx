@@ -6,6 +6,7 @@ import { dialogIsOpen, isTypingTarget } from './lib/shortcuts';
 import { NAV_ITEMS, Nav } from './components/Nav';
 import { Button, Notice, PageSkeleton } from './components/ui';
 import { Onboarding } from './components/Onboarding';
+import { CommandPalette } from './components/CommandPalette';
 import HomePage from './pages/Home';
 
 // Everything except Home is loaded on demand, so the first screen appears quickly.
@@ -153,6 +154,7 @@ export default function App() {
         </div>
       </main>
       <Onboarding />
+      <CommandPalette />
     </>
   );
 }

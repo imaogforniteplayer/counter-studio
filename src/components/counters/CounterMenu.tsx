@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BarChart3, Copy, Folder, History, Pencil, Pin, PinOff, Save, Share2, Trash2 } from 'lucide-react';
+import { BarChart3, Copy, Folder, History, Lock, Pencil, Pin, PinOff, Save, Share2, Trash2, Unlock } from 'lucide-react';
 import { useAppState, useDialogs, useStore, useToast } from '../../app/context';
 import type { Counter } from '../../core/types';
 import { navigate } from '../../lib/router';
@@ -54,6 +54,14 @@ export function CounterMenu({
       icon: counter.pinned ? <PinOff size={16} /> : <Pin size={16} />,
       onSelect: () => {
         store.togglePin(counter.id);
+      },
+    },
+    {
+      label: counter.locked ? 'Unlock counter' : 'Lock counter',
+      icon: counter.locked ? <Unlock size={16} /> : <Lock size={16} />,
+      onSelect: () => {
+        const now = store.toggleLock(counter.id);
+        if (now !== null) toast(now ? 'Locked. Taps and typing are ignored until you unlock it.' : 'Unlocked.', 'info');
       },
     },
     { label: 'Move to folder…', icon: <Folder size={16} />, onSelect: () => setFolderOpen(true) },

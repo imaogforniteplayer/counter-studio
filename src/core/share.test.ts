@@ -23,6 +23,14 @@ describe('base64url', () => {
   });
 });
 
+describe('opening a share link', () => {
+  it('never opens a counter that was locked by its sender', () => {
+    const locked = createCounter({ name: 'Mine', value: 3, locked: true });
+    const token = encodeShare(buildSharePayload(locked, { includeValue: true, includeDescription: false }));
+    expect(counterFromShareToken(token).locked).toBe(false);
+  });
+});
+
 describe('share payload privacy', () => {
   const secret = createCounter({
     id: 'private-id-123',
@@ -39,6 +47,7 @@ describe('share payload privacy', () => {
     expect(json.includes('private-id-123')).toBe(false);
     expect(json.includes('folder-health')).toBe(false);
     expect(json.includes('pinned')).toBe(false);
+    expect(json.includes('locked')).toBe(false);
     expect(json.includes('createdAt')).toBe(false);
     expect(json.includes('1111')).toBe(false);
     expect(json.includes('history')).toBe(false);

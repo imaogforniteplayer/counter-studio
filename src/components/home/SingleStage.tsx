@@ -14,7 +14,7 @@ import type { Counting } from './useCounting';
 import { EditableNumber } from './EditableNumber';
 import { HoldButton } from './HoldButton';
 import { contentWidth, fitNumberPx } from './layout';
-import { clampNumber, useViewport } from './shared';
+import { LOCKED_MESSAGE, clampNumber, useViewport } from './shared';
 
 export interface StageProps {
   counter: Counter;
@@ -47,7 +47,8 @@ export function SingleStage({ counter: c, counting, auto, full }: StageProps) {
 
   const commit = (n: number) => {
     const r = store.setValue(c.id, n);
-    if (r && r.value !== n) toast(`Set to ${formatNumber(r.value)}, the closest value this counter allows.`);
+    if (r?.locked) toast(LOCKED_MESSAGE);
+    else if (r && r.value !== n) toast(`Set to ${formatNumber(r.value)}, the closest value this counter allows.`);
   };
 
   const numberEl = (

@@ -39,6 +39,8 @@ export interface Counter {
   subCounters: SubCounter[];
   folderId: string | null;
   pinned: boolean;
+  /** When true, taps, typing, reset and undo are ignored until it is unlocked. */
+  locked: boolean;
   order: number;
   cardStyle: CardStyle;
   createdAt: number;

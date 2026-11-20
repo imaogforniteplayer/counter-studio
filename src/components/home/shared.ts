@@ -50,3 +50,6 @@ export function useViewport(): { w: number; h: number } {
   }, []);
   return size;
 }
+
+/** Shown whenever a locked counter ignores a tap, a typed value, a reset or an undo. */
+export const LOCKED_MESSAGE = 'This counter is locked. Unlock it to make changes.';

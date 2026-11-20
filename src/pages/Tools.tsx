@@ -1,25 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Calculator, Clapperboard, Coins, Dices, Hash, Hourglass, Shuffle, Timer as TimerIcon, Copy, Flag, Pause, Play, RotateCcw, BellOff } from 'lucide-react';
-import { useSettings, useStore, useToast } from '../app/context';
+import { Calculator, Clapperboard, Coins, Dices, Hash, Hourglass, Shuffle, Timer as TimerIcon, Copy, Flag, Pause, Play, RotateCcw, BellOff, SkipForward, Target } from 'lucide-react';
+import { useAppState, useSettings, useStore, useToast } from '../app/context';
+import { liveCounters } from '../app/selectors';
 import { formatDuration, formatNumber } from '../core/format';
 import {
+  DEFAULT_FOCUS_PLAN,
   MAX_DICE,
   MAX_SIDES,
   addLap,
   addTap,
   bpmFromTaps,
+  focusSessionsDone,
+  focusStep,
+  focusTimeDone,
   formatDice,
   lapExtremes,
   pace,
   parseDiceNotation,
   randomInt,
   rollDice,
+  sanitizeFocusPlan,
   secureRandom,
   shuffle,
   toMs,
 } from '../core/tools';
-import type { DiceRoll, DiceSpec, Lap } from '../core/tools';
+import type { DiceRoll, DiceSpec, FocusPlan, Lap } from '../core/tools';
 import { startAlarm, stopAlarm } from '../lib/alarm';
 import type { AlarmHandle } from '../lib/alarm';
 import { AlarmPicker } from '../components/AlarmPicker';
@@ -27,13 +33,14 @@ import { alarmInfo } from '../core/alarms';
 import { copyText } from '../lib/files';
 import { navigate, useRoute } from '../lib/router';
 import { cx } from '../lib/cx';
-import { Button, Card, Field, PageHeader, Segmented, TextArea, TextInput } from '../components/ui';
+import { Badge, Button, Card, Field, PageHeader, Segmented, Select, TextArea, TextInput, Toggle } from '../components/ui';
 
-type ToolId = 'stopwatch' | 'timer' | 'dice' | 'coin' | 'number' | 'picker' | 'tempo' | 'pace';
+type ToolId = 'stopwatch' | 'timer' | 'focus' | 'dice' | 'coin' | 'number' | 'picker' | 'tempo' | 'pace';
 
 const TOOLS: { id: ToolId; name: string; icon: ReactNode }[] = [
   { id: 'stopwatch', name: 'Stopwatch', icon: <TimerIcon size={17} /> },
   { id: 'timer', name: 'Timer', icon: <Hourglass size={17} /> },
+  { id: 'focus', name: 'Focus', icon: <Target size={17} /> },
   { id: 'dice', name: 'Dice', icon: <Dices size={17} /> },
   { id: 'coin', name: 'Coin flip', icon: <Coins size={17} /> },
   { id: 'number', name: 'Random number', icon: <Hash size={17} /> },
@@ -271,6 +278,216 @@ function CountdownTimer() {
           </Button>
         )}
         <Button size="lg" icon={<RotateCcw size={17} />} onClick={reset} disabled={editing && !finished}>
+          Reset
+        </Button>
+      </div>
+    </Panel>
+  );
+}
+
+/* ---------------- focus intervals ---------------- */
+
+const FOCUS_KEY = 'tickwell.focusPlan';
+const FOCUS_PRESETS: { label: string; plan: FocusPlan }[] = [
+  { label: '25 / 5', plan: DEFAULT_FOCUS_PLAN },
+  { label: '50 / 10', plan: { focusMin: 50, shortMin: 10, longMin: 30, sessions: 3 } },
+  { label: '90 / 20', plan: { focusMin: 90, shortMin: 20, longMin: 30, sessions: 2 } },
+];
+
+function loadFocusPlan(): FocusPlan {
+  try {
+    return sanitizeFocusPlan(JSON.parse(window.localStorage.getItem(FOCUS_KEY) ?? '{}'));
+  } catch {
+    return DEFAULT_FOCUS_PLAN;
+  }
+}
+
+function saveFocusPlan(plan: FocusPlan): void {
+  try {
+    window.localStorage.setItem(FOCUS_KEY, JSON.stringify(plan));
+  } catch {
+    /* A plan that is not remembered is fine. */
+  }
+}
+
+const PHASE_NAME = { focus: 'Focus', short: 'Short break', long: 'Long break' } as const;
+
+function FocusTimer() {
+  const settings = useSettings();
+  const store = useStore();
+  const toast = useToast();
+  const { counters } = useAppState();
+  const [fields, setFields] = useState(() => {
+    const p = loadFocusPlan();
+    return { focusMin: String(p.focusMin), shortMin: String(p.shortMin), longMin: String(p.longMin), sessions: String(p.sessions) };
+  });
+  const draft = sanitizeFocusPlan(fields);
+  const [locked, setLocked] = useState<FocusPlan | null>(null); // the plan this run started with
+  const [step, setStep] = useState(0);
+  const [endAt, setEndAt] = useState<number | null>(null);
+  const [left, setLeft] = useState<number | null>(null);
+  const [auto, setAuto] = useState(true);
+  const [countId, setCountId] = useState('');
+  const [ringing, setRinging] = useState(false);
+  const ring = useRef<number | null>(null);
+
+  const plan = locked ?? draft;
+  const current = focusStep(plan, step);
+  const running = endAt !== null;
+  const started = locked !== null;
+  const now = useTick(running, 250);
+  const remaining = running ? Math.max(0, endAt - now) : left ?? current.ms;
+
+  const silence = () => {
+    if (ring.current !== null) window.clearTimeout(ring.current);
+    ring.current = null;
+    stopAlarm();
+    setRinging(false);
+  };
+  // Leaving the page stops the alarm.
+  useEffect(() => silence, []);
+
+  const countable = liveCounters(counters).filter((c) => c.mode !== 'score' && c.mode !== 'multi' && c.mode !== 'countdown' && c.mode !== 'interval');
+  const countTarget = countable.find((c) => c.id === countId);
+
+  // A step is over: ring, count the finished focus session, and move on.
+  useEffect(() => {
+    if (!running || remaining > 0) return;
+    const next = focusStep(plan, step + 1);
+    if (current.phase === 'focus' && countTarget) {
+      const result = store.bump(countTarget.id, 1);
+      if (result?.locked) toast(`“${countTarget.name}” is locked, so this session was not counted.`);
+    }
+    const handle = startAlarm(settings, undefined, Math.min(settings.alarmRepeats, 2));
+    setRinging(true);
+    ring.current = window.setTimeout(() => setRinging(false), handle.seconds * 1000 + 300);
+    toast(current.phase === 'focus' ? `Focus session done. ${PHASE_NAME[next.phase]} next.` : 'Break over. Time to focus.', 'success');
+    setStep(step + 1);
+    if (auto) {
+      setEndAt(Date.now() + next.ms);
+    } else {
+      setEndAt(null);
+      setLeft(null);
+    }
+  }, [running, remaining, plan, step, current.phase, countTarget, auto, settings, store, toast]);
+
+  const start = () => {
+    silence();
+    if (!locked) {
+      saveFocusPlan(draft);
+      setLocked(draft);
+    }
+    setEndAt(Date.now() + (left && left > 0 ? left : current.ms));
+    setLeft(null);
+  };
+  const pause = () => {
+    if (endAt !== null) setLeft(Math.max(0, endAt - Date.now()));
+    setEndAt(null);
+  };
+  const skip = () => {
+    silence();
+    const next = focusStep(plan, step + 1);
+    setStep(step + 1);
+    setLeft(null);
+    setEndAt(running ? Date.now() + next.ms : null);
+  };
+  const reset = () => {
+    silence();
+    setLocked(null);
+    setStep(0);
+    setEndAt(null);
+    setLeft(null);
+  };
+  const applyPreset = (p: FocusPlan) =>
+    setFields({ focusMin: String(p.focusMin), shortMin: String(p.shortMin), longMin: String(p.longMin), sessions: String(p.sessions) });
+
+  const done = focusSessionsDone(step);
+  const focused = focusTimeDone(plan, step, current.ms - remaining);
+  const pct = current.ms > 0 ? Math.min(100, ((current.ms - remaining) / current.ms) * 100) : 0;
+  const resting = current.phase !== 'focus';
+  const field = (key: keyof FocusPlan, label: string, id: string, max: number) => (
+    <Field label={label} htmlFor={id}>
+      <TextInput id={id} type="number" inputMode="numeric" min={1} max={max} value={fields[key]} onChange={(v) => setFields((f) => ({ ...f, [key]: v }))} />
+    </Field>
+  );
+
+  return (
+    <Panel title="Focus" description="Work in timed sessions with breaks in between. Your alarm sound marks every change, and each finished session can add one to a counter.">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Badge tone={resting ? 'good' : 'accent'}>{PHASE_NAME[current.phase]}</Badge>
+        <span className="text-[13px] text-muted">
+          Session {current.session} of {plan.sessions}
+          {current.set > 1 ? `, set ${current.set}` : ''}
+        </span>
+      </div>
+      <BigReadout label={`${PHASE_NAME[current.phase]}, ${formatDuration(remaining)} left`}>{formatDuration(remaining)}</BigReadout>
+      <div className="h-1.5 overflow-hidden rounded-full bg-line/10" aria-hidden="true">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, rgb(var(--accent)), rgb(var(--accent2)))' }} />
+      </div>
+      {ringing && (
+        <div className="alarm-pulse flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-good/40 bg-good/10 px-4 py-3">
+          <p className="text-[15px] font-semibold text-good" role="status">
+            {resting ? 'Focus session finished.' : 'Break finished.'}
+          </p>
+          <Button size="sm" variant="danger" icon={<BellOff size={15} />} onClick={silence}>
+            Stop alarm
+          </Button>
+        </div>
+      )}
+      {started && (
+        <p className="text-center text-[13px] text-muted">
+          {done} {done === 1 ? 'session' : 'sessions'} finished, {formatDuration(focused)} focused
+          {countTarget ? `, counting on “${countTarget.name}”` : ''}
+        </p>
+      )}
+      {!started && (
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {field('focusMin', 'Focus (min)', 'f-focus', 180)}
+            {field('shortMin', 'Short break', 'f-short', 60)}
+            {field('longMin', 'Long break', 'f-long', 120)}
+            {field('sessions', 'Sessions per set', 'f-sessions', 8)}
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Presets">
+            {FOCUS_PRESETS.map((p) => (
+              <button key={p.label} type="button" className="chip" onClick={() => applyPreset(p.plan)}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      <div className="space-y-3">
+        <Field label="Count finished sessions on" htmlFor="f-counter">
+          <Select
+            id="f-counter"
+            value={countTarget ? countTarget.id : ''}
+            onChange={setCountId}
+            options={[{ value: '', label: 'No counter' }, ...countable.map((c) => ({ value: c.id, label: c.name }))]}
+          />
+        </Field>
+        <Toggle checked={auto} onChange={setAuto} label="Start the next step automatically" description="Turn this off to wait for you after every alarm." />
+        {!started && (
+          <div>
+            <p className="mb-1.5 text-[13px] font-medium text-muted">Alarm sound</p>
+            <AlarmPicker settings={settings} onChange={(alarmSound) => store.updateSettings({ alarmSound })} />
+          </div>
+        )}
+      </div>
+      <div className="flex gap-2">
+        {running ? (
+          <Button variant="primary" size="lg" icon={<Pause size={18} />} onClick={pause} className="flex-1">
+            Pause
+          </Button>
+        ) : (
+          <Button variant="primary" size="lg" icon={<Play size={18} />} onClick={start} className="flex-1">
+            {left !== null && left > 0 ? 'Resume' : started ? 'Start next' : 'Start'}
+          </Button>
+        )}
+        <Button size="lg" icon={<SkipForward size={17} />} onClick={skip} disabled={!started} aria-label="Skip to the next step">
+          Skip
+        </Button>
+        <Button size="lg" icon={<RotateCcw size={17} />} onClick={reset} disabled={!started}>
           Reset
         </Button>
       </div>
@@ -573,6 +790,7 @@ export default function ToolsPage() {
       <div ref={ref} id="tool-panel" role="tabpanel" aria-labelledby={`tool-tab-${tool}`}>
         {tool === 'stopwatch' && <Stopwatch />}
         {tool === 'timer' && <CountdownTimer />}
+        {tool === 'focus' && <FocusTimer />}
         {tool === 'dice' && <DiceTool />}
         {tool === 'coin' && <Coin />}
         {tool === 'number' && <RandomNumber />}

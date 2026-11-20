@@ -269,6 +269,80 @@ export function dailyCounts(entries: HistoryEntry[], days: number, now: number):
   return out;
 }
 
+export type HeatLevel = 0 | 1 | 2 | 3 | 4;
+
+export interface HeatCell {
+  /** Midnight at the start of the day, local time. */
+  day: number;
+  count: number;
+  level: HeatLevel;
+}
+
+export interface Heatmap {
+  /** One column per week, Monday first. Days after today are null. */
+  weeks: (HeatCell | null)[][];
+  /** The busiest day shown. */
+  max: number;
+  /** Changes counted across every day shown. */
+  total: number;
+  activeDays: number;
+  /** Weeks where a new month starts, so the chart can label them. */
+  monthStarts: { week: number; month: number }[];
+}
+
+/** 0 for a quiet day, then 1 to 4 for quarters of the busiest day. */
+export function heatLevel(count: number, max: number): HeatLevel {
+  if (!(count > 0) || !(max > 0)) return 0;
+  return Math.min(4, Math.max(1, Math.ceil((count / max) * 4))) as HeatLevel;
+}
+
+/** A calendar of daily activity: the last `weeks` whole weeks, ending with the current one. */
+export function heatmap(entries: HistoryEntry[], weeks: number, now: number): Heatmap {
+  const count = Math.max(1, Math.floor(weeks));
+  const today = startOfDay(now);
+  const first = addBucket(startOfWeek(today), 'week', -(count - 1));
+  const perDay = new Map<string, number>();
+  for (const e of entries) {
+    if (e.kind !== 'inc' && e.kind !== 'dec' && e.kind !== 'auto') continue;
+    const key = dayKey(e.at);
+    perDay.set(key, (perDay.get(key) ?? 0) + 1);
+  }
+  let max = 0;
+  let total = 0;
+  let activeDays = 0;
+  const raw: ({ day: number; count: number } | null)[][] = [];
+  for (let w = 0; w < count; w++) {
+    const column: ({ day: number; count: number } | null)[] = [];
+    for (let d = 0; d < 7; d++) {
+      const day = addBucket(first, 'day', w * 7 + d);
+      if (day > today) {
+        column.push(null);
+        continue;
+      }
+      const n = perDay.get(dayKey(day)) ?? 0;
+      column.push({ day, count: n });
+      total += n;
+      if (n > 0) activeDays += 1;
+      if (n > max) max = n;
+    }
+    raw.push(column);
+  }
+  const monthStarts: { week: number; month: number }[] = [];
+  let lastMonth = -1;
+  raw.forEach((column, w) => {
+    const month = new Date(column[0]?.day ?? first).getMonth();
+    if (month !== lastMonth) monthStarts.push({ week: w, month });
+    lastMonth = month;
+  });
+  return {
+    weeks: raw.map((column) => column.map((c) => (c ? { ...c, level: heatLevel(c.count, max) } : null))),
+    max,
+    total,
+    activeDays,
+    monthStarts,
+  };
+}
+
 export interface Streaks {
   current: number;
   longest: number;

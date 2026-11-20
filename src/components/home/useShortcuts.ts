@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useDialogs, useSettings } from '../../app/context';
+import { useDialogs, useSettings, useToast } from '../../app/context';
 import type { Counter } from '../../core/types';
 import { primaryDirection } from '../../core/counter';
 import { dialogIsOpen, isTypingTarget } from '../../lib/shortcuts';
@@ -27,6 +27,7 @@ export function useCountingShortcuts({
 }) {
   const store = useStore();
   const dialogs = useDialogs();
+  const toast = useToast();
   const { shortcuts } = useSettings();
   const { reset } = useCounterActions();
   const latest = useRef({ counter, counting, auto, fullscreen, onStep, reset });
@@ -103,6 +104,11 @@ export function useCountingShortcuts({
           e.preventDefault();
           a.toggle();
           return;
+        case 'l':
+        case 'L':
+          e.preventDefault();
+          toast(store.toggleLock(c.id) ? 'Locked. Taps and typing are ignored until you unlock it.' : 'Unlocked.', 'info');
+          return;
         case '[':
           e.preventDefault();
           step(-1);
@@ -116,5 +122,5 @@ export function useCountingShortcuts({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [shortcuts, store, dialogs]);
+  }, [shortcuts, store, dialogs, toast]);
 }

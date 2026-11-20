@@ -26,6 +26,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: ['F'], label: 'Full-screen counting' },
       { keys: ['E'], label: 'Edit this counter' },
       { keys: ['A'], label: 'Start or stop auto-counting' },
+      { keys: ['L'], label: 'Lock or unlock this counter' },
       { keys: ['['], label: 'Previous counter' },
       { keys: [']'], label: 'Next counter' },
     ],
@@ -33,6 +34,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: 'Anywhere',
     items: [
+      { keys: ['Ctrl', 'K'], label: 'Open the command palette (⌘K on a Mac)' },
       { keys: ['N'], label: 'New counter' },
       { keys: ['/'], label: 'Search (on My Counters and History)' },
       { keys: ['?'], label: 'Show this help' },

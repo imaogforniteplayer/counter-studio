@@ -8,6 +8,8 @@ import {
   computeStreaks,
   dailyCounts,
   goalHistory,
+  heatLevel,
+  heatmap,
   rangeWindow,
   sessionsFrom,
   startOfDay,
@@ -256,5 +258,70 @@ describe('sessions, per-counter stats and goals', () => {
     const list = [entry(day(0), 1), entry(day(0), 1), entry(day(-1), 1)];
     const d = dailyCounts(list, 3, NOW);
     expect(d.map((x) => x.count)).toEqual([0, 1, 2]);
+  });
+});
+
+describe('heatmap', () => {
+  it('levels: quiet is 0 and the busiest day is 4', () => {
+    expect(heatLevel(0, 8)).toBe(0);
+    expect(heatLevel(1, 8)).toBe(1);
+    expect(heatLevel(2, 8)).toBe(1);
+    expect(heatLevel(3, 8)).toBe(2);
+    expect(heatLevel(6, 8)).toBe(3);
+    expect(heatLevel(8, 8)).toBe(4);
+    expect(heatLevel(5, 0)).toBe(0);
+    expect(heatLevel(-2, 8)).toBe(0);
+  });
+
+  it('lays out whole weeks, Monday first, ending with the current week', () => {
+    const h = heatmap([], 4, NOW);
+    expect(h.weeks).toHaveLength(4);
+    h.weeks.forEach((w) => expect(w).toHaveLength(7));
+    // NOW is a Tuesday, so the last week has Monday and Tuesday, then nothing.
+    const last = h.weeks[3];
+    expect(last[0]).not.toBeNull();
+    expect(last[1]).not.toBeNull();
+    expect(last.slice(2).every((c) => c === null)).toBe(true);
+    expect(last[1]!.day).toBe(startOfDay(NOW));
+    expect(new Date(h.weeks[0][0]!.day).getDay()).toBe(1);
+  });
+
+  it('counts only counting changes, per day', () => {
+    const list = [
+      entry(day(0), 1),
+      entry(day(0), 1),
+      entry(day(0), -1),
+      entry(day(-1), 1),
+      entry(day(0), 5, { kind: 'set' }),
+      entry(day(0), 0, { kind: 'reset' }),
+    ];
+    const h = heatmap(list, 2, NOW);
+    const cells = h.weeks.flat().filter((c) => c !== null);
+    const today = cells.find((c) => c!.day === startOfDay(NOW))!;
+    const yesterday = cells.find((c) => c!.day === startOfDay(day(-1)))!;
+    expect(today.count).toBe(3);
+    expect(today.level).toBe(4);
+    expect(yesterday.count).toBe(1);
+    expect(h.max).toBe(3);
+    expect(h.total).toBe(4);
+    expect(h.activeDays).toBe(2);
+  });
+
+  it('ignores activity older than the weeks shown', () => {
+    const h = heatmap([entry(day(-200), 1)], 4, NOW);
+    expect(h.total).toBe(0);
+    expect(h.activeDays).toBe(0);
+  });
+
+  it('marks where each month begins, starting with the first column', () => {
+    const h = heatmap([], 26, NOW);
+    expect(h.monthStarts[0].week).toBe(0);
+    const months = h.monthStarts.map((m) => m.month);
+    expect(new Set(months).size).toBe(months.length);
+    for (let i = 1; i < h.monthStarts.length; i++) expect(h.monthStarts[i].week).toBeGreaterThan(h.monthStarts[i - 1].week);
+  });
+
+  it('always shows at least one week', () => {
+    expect(heatmap([], 0, NOW).weeks).toHaveLength(1);
   });
 });

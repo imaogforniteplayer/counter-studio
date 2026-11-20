@@ -9,7 +9,7 @@ import { MODE_INFO } from '../../core/counter';
 import { EditableNumber } from './EditableNumber';
 import { HoldButton } from './HoldButton';
 import { fitNumberPx } from './layout';
-import { stageVars } from './shared';
+import { LOCKED_MESSAGE, stageVars } from './shared';
 import type { StageProps } from './SingleStage';
 
 interface Row {
@@ -96,7 +96,7 @@ export function GroupStage({ counter: c, counting, full }: StageProps) {
                 label={`${r.name} ${score ? 'score' : 'count'}`}
                 style={{ ['--num-size' as string]: `${px}px` } as CSSProperties}
                 onCommit={(n) => {
-                  store.setTargetValue(c.id, r.id, n);
+                  if (store.setTargetValue(c.id, r.id, n)?.locked) toast(LOCKED_MESSAGE);
                 }}
               />
               <div className="flex flex-wrap items-center justify-center gap-3">

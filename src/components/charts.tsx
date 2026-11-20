@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
-import { formatNumber } from '../core/format';
+import { formatDate, formatNumber } from '../core/format';
+import type { HeatLevel, Heatmap } from '../core/stats';
 
 export interface BarDatum {
   label: string;
@@ -175,5 +176,66 @@ export function ShareBars({ rows }: { rows: { label: string; value: number; colo
         </li>
       ))}
     </ul>
+  );
+}
+
+const HEAT_FILL: Record<HeatLevel, string> = {
+  0: 'rgb(var(--line) / 0.1)',
+  1: 'rgb(var(--accent) / 0.3)',
+  2: 'rgb(var(--accent) / 0.5)',
+  3: 'rgb(var(--accent) / 0.75)',
+  4: 'rgb(var(--accent))',
+};
+
+const ROW_LABELS: Record<number, string> = { 0: 'Mon', 2: 'Wed', 4: 'Fri' };
+
+/** A calendar of daily activity. Darker squares are busier days. */
+export function ActivityHeatmap({ data, title }: { data: Heatmap; title: string }) {
+  const columns = data.weeks.length;
+  // A month name needs about three columns of room, and must not hang over the right edge.
+  const labels = data.monthStarts.filter((m, i) => {
+    const next = data.monthStarts[i + 1];
+    return m.week <= columns - 3 && (next ? next.week - m.week >= 3 : true);
+  });
+  // One grid for everything, so the weekday names line up with the squares whatever their size.
+  return (
+    <div>
+      <div
+        className="grid gap-[3px]"
+        style={{ gridTemplateColumns: `1.9rem repeat(${columns}, minmax(0, 1fr))` }}
+        role="img"
+        aria-label={title}
+      >
+        {labels.map((m) => (
+          <span key={`m${m.week}`} className="h-4 whitespace-nowrap text-[11px] leading-4 text-muted" style={{ gridRow: 1, gridColumn: `${m.week + 2} / span 3` }} aria-hidden="true">
+            {new Date(2024, m.month, 1).toLocaleDateString(undefined, { month: 'short' })}
+          </span>
+        ))}
+        {[0, 2, 4].map((d) => (
+          <span key={`d${d}`} className="flex items-center text-[11px] leading-none text-muted" style={{ gridRow: d + 2, gridColumn: 1 }} aria-hidden="true">
+            {ROW_LABELS[d]}
+          </span>
+        ))}
+        {data.weeks.map((week, w) =>
+          week.map((cell, d) =>
+            cell ? (
+              <span
+                key={`${w}-${d}`}
+                className="block aspect-square w-full rounded-[3px]"
+                style={{ gridRow: d + 2, gridColumn: w + 2, background: HEAT_FILL[cell.level] }}
+                title={`${formatDate(cell.day)}: ${cell.count === 0 ? 'no changes' : `${formatNumber(cell.count)} ${cell.count === 1 ? 'change' : 'changes'}`}`}
+              />
+            ) : null,
+          ),
+        )}
+      </div>
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-[11.5px] text-muted" aria-hidden="true">
+        Less
+        {([0, 1, 2, 3, 4] as HeatLevel[]).map((l) => (
+          <span key={l} className="block h-3 w-3 rounded-[3px]" style={{ background: HEAT_FILL[l] }} />
+        ))}
+        More
+      </div>
+    </div>
   );
 }

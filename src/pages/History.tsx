@@ -36,6 +36,7 @@ export default function HistoryPage() {
   const revert = (id: string) => {
     const r = store.revertEntry(id);
     if (r === 'ok') toast('Change reverted. The counter was adjusted to match.', 'success');
+    else if (r === 'locked') toast('That counter is locked. Unlock it from its menu to revert changes.', 'error');
     else if (r === 'blocked') toast("That change can't be reverted because the counter has hit its limit.", 'error');
     else toast('That change can no longer be reverted.', 'error');
   };

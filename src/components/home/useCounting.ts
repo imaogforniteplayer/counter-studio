@@ -5,6 +5,7 @@ import { startAlarm } from '../../lib/alarm';
 import { formatNumber } from '../../core/format';
 import type { ChangeKind } from '../../core/types';
 import type { BumpResult } from '../../data/store';
+import { LOCKED_MESSAGE } from './shared';
 
 export interface Counting {
   /** Change the main value. Handles sound, vibration, limit and goal messages. */
@@ -45,6 +46,15 @@ export function useCounting(counterId: string | null): Counting {
     (result: BumpResult, direction: 1 | -1, kind?: ChangeKind) => {
       const s = settingsRef.current;
       const c = counterId ? store.getCounter(counterId) : undefined;
+      if (result.locked) {
+        flash(setShaking, 380);
+        feedback(s, 'limit');
+        if (!toasted.current) {
+          toasted.current = true;
+          toast(LOCKED_MESSAGE);
+        }
+        return;
+      }
       if (result.hit) {
         flash(setShaking, 380);
         feedback(s, 'limit');

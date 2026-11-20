@@ -147,3 +147,84 @@ export function lapExtremes(laps: Lap[]): { fastest: number | null; slowest: num
   }
   return { fastest: fastest.n, slowest: slowest.n };
 }
+
+/* ---------------- focus intervals (Pomodoro) ---------------- */
+
+export type FocusPhase = 'focus' | 'short' | 'long';
+
+export interface FocusPlan {
+  /** Minutes of work in each focus session. */
+  focusMin: number;
+  /** Minutes of rest between focus sessions. */
+  shortMin: number;
+  /** Minutes of rest after the last focus session of a set. */
+  longMin: number;
+  /** Focus sessions in one set. The last one is followed by the long break. */
+  sessions: number;
+}
+
+export const DEFAULT_FOCUS_PLAN: FocusPlan = { focusMin: 25, shortMin: 5, longMin: 15, sessions: 4 };
+
+export const FOCUS_LIMITS = {
+  focusMin: { min: 1, max: 180 },
+  shortMin: { min: 1, max: 60 },
+  longMin: { min: 1, max: 120 },
+  sessions: { min: 2, max: 8 },
+} as const;
+
+function clampInt(value: unknown, min: number, max: number, fallback: number): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(n)));
+}
+
+/** Whatever was typed becomes a plan that is always valid. */
+export function sanitizeFocusPlan(raw: Partial<Record<keyof FocusPlan, unknown>> = {}): FocusPlan {
+  const d = DEFAULT_FOCUS_PLAN;
+  const L = FOCUS_LIMITS;
+  return {
+    focusMin: clampInt(raw.focusMin, L.focusMin.min, L.focusMin.max, d.focusMin),
+    shortMin: clampInt(raw.shortMin, L.shortMin.min, L.shortMin.max, d.shortMin),
+    longMin: clampInt(raw.longMin, L.longMin.min, L.longMin.max, d.longMin),
+    sessions: clampInt(raw.sessions, L.sessions.min, L.sessions.max, d.sessions),
+  };
+}
+
+export interface FocusStep {
+  phase: FocusPhase;
+  ms: number;
+  /** Which focus session of the set this is (or follows), starting at 1. */
+  session: number;
+  /** Which set this step belongs to, starting at 1. */
+  set: number;
+}
+
+/**
+ * Step number `index` (from 0) of the endless schedule:
+ * focus, short, focus, short … focus, long, then it starts over.
+ */
+export function focusStep(plan: FocusPlan, index: number): FocusStep {
+  const i = Math.max(0, Math.floor(index));
+  const length = plan.sessions * 2;
+  const at = i % length;
+  const set = Math.floor(i / length) + 1;
+  if (at % 2 === 0) return { phase: 'focus', ms: plan.focusMin * 60_000, session: at / 2 + 1, set };
+  const session = (at - 1) / 2 + 1;
+  return at === length - 1
+    ? { phase: 'long', ms: plan.longMin * 60_000, session, set }
+    : { phase: 'short', ms: plan.shortMin * 60_000, session, set };
+}
+
+/** Focus sessions that were finished once `stepsDone` steps are complete. */
+export function focusSessionsDone(stepsDone: number): number {
+  return Math.ceil(Math.max(0, Math.floor(stepsDone)) / 2);
+}
+
+/** Total focus time so far, counting the part of the current step that has passed. */
+export function focusTimeDone(plan: FocusPlan, stepsDone: number, elapsedInStep = 0): number {
+  const done = Math.max(0, Math.floor(stepsDone));
+  let total = focusSessionsDone(done) * plan.focusMin * 60_000;
+  const current = focusStep(plan, done);
+  if (current.phase === 'focus') total += Math.min(current.ms, Math.max(0, elapsedInStep));
+  return total;
+}

@@ -199,9 +199,25 @@ for (const [label, opts, flags] of sizes) {
     await report('reset confirmation');
     await esc();
   }
+  if (await click(aria('Actions for'), 250, 'counter actions')) {
+    if (await click(page.getByRole('menuitem', { name: 'Lock counter' }), 300, 'Lock counter')) {
+      await report('home: locked counter');
+      if (await click(btn(/Unlock it/), 250, 'Unlock')) await report('home: unlocked again');
+    } else await esc();
+  }
   await page.keyboard.press('?');
   await page.waitForTimeout(250);
   await report('shortcuts help');
+  await esc();
+  await page.keyboard.press('Control+k');
+  await page.waitForTimeout(300);
+  await report('command palette');
+  await page.keyboard.type('tim', { delay: 20 });
+  await page.waitForTimeout(150);
+  await report('command palette: results');
+  await page.keyboard.type('zzzzzz', { delay: 10 });
+  await page.waitForTimeout(150);
+  await report('command palette: no results');
   await esc();
 
   // The editor, for each counter type.
@@ -231,9 +247,14 @@ for (const [label, opts, flags] of sizes) {
     await go(hash);
     await report(name);
   }
-  for (const tool of ['stopwatch', 'timer', 'dice', 'coin', 'number', 'picker', 'tempo', 'pace']) {
+  for (const tool of ['stopwatch', 'timer', 'focus', 'dice', 'coin', 'number', 'picker', 'tempo', 'pace']) {
     await go(`#/tools?tool=${tool}`);
     await report(`tool: ${tool}`);
+  }
+  await go('#/tools?tool=focus');
+  if (await click(btn('Start', true), 300, 'Start focus')) {
+    await report('tool: focus running');
+    await click(btn('Pause', true), 200, 'Pause focus');
   }
   await go('#/settings');
   if (await page.getByLabel('Background style').count()) {

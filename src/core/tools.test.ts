@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_TIMER_MS, addLap, addTap, bpmFromTaps, formatDice, lapExtremes, pace, parseDiceNotation, randomInt, rollDice, shuffle, toMs } from './tools';
+import {
+  DEFAULT_FOCUS_PLAN,
+  MAX_TIMER_MS,
+  addLap,
+  addTap,
+  bpmFromTaps,
+  focusSessionsDone,
+  focusStep,
+  focusTimeDone,
+  formatDice,
+  lapExtremes,
+  pace,
+  parseDiceNotation,
+  randomInt,
+  rollDice,
+  sanitizeFocusPlan,
+  shuffle,
+  toMs,
+} from './tools';
 
 const seq = (...v: number[]) => {
   let i = 0;
@@ -98,5 +116,56 @@ describe('timer input and laps', () => {
     expect(laps.map((l) => l.split)).toEqual([1000, 2500, 500]);
     expect(lapExtremes(laps)).toEqual({ fastest: 3, slowest: 2 });
     expect(lapExtremes(laps.slice(0, 1))).toEqual({ fastest: null, slowest: null });
+  });
+});
+
+describe('focus intervals', () => {
+  const plan = DEFAULT_FOCUS_PLAN;
+
+  it('alternates focus and short breaks, ending each set with a long break', () => {
+    const phases = Array.from({ length: 9 }, (_, i) => focusStep(plan, i).phase);
+    expect(phases).toEqual(['focus', 'short', 'focus', 'short', 'focus', 'short', 'focus', 'long', 'focus']);
+  });
+
+  it('uses the plan lengths in milliseconds', () => {
+    expect(focusStep(plan, 0).ms).toBe(25 * 60_000);
+    expect(focusStep(plan, 1).ms).toBe(5 * 60_000);
+    expect(focusStep(plan, 7).ms).toBe(15 * 60_000);
+  });
+
+  it('numbers sessions and sets', () => {
+    expect(focusStep(plan, 0)).toMatchObject({ session: 1, set: 1 });
+    expect(focusStep(plan, 6)).toMatchObject({ session: 4, set: 1, phase: 'focus' });
+    expect(focusStep(plan, 7)).toMatchObject({ session: 4, set: 1, phase: 'long' });
+    expect(focusStep(plan, 8)).toMatchObject({ session: 1, set: 2, phase: 'focus' });
+  });
+
+  it('works with a shorter set', () => {
+    const two = sanitizeFocusPlan({ sessions: 2 });
+    expect(Array.from({ length: 5 }, (_, i) => focusStep(two, i).phase)).toEqual(['focus', 'short', 'focus', 'long', 'focus']);
+  });
+
+  it('treats a negative or fractional index as the nearest valid step', () => {
+    expect(focusStep(plan, -3).phase).toBe('focus');
+    expect(focusStep(plan, 1.9).phase).toBe('short');
+  });
+
+  it('counts finished focus sessions', () => {
+    expect([0, 1, 2, 3, 4, 8].map(focusSessionsDone)).toEqual([0, 1, 1, 2, 2, 4]);
+    expect(focusSessionsDone(-4)).toBe(0);
+  });
+
+  it('adds up focus time including the running session only', () => {
+    expect(focusTimeDone(plan, 0, 10 * 60_000)).toBe(10 * 60_000);
+    expect(focusTimeDone(plan, 0, 99 * 60_000)).toBe(25 * 60_000);
+    expect(focusTimeDone(plan, 1, 60_000)).toBe(25 * 60_000);
+    expect(focusTimeDone(plan, 2, 5 * 60_000)).toBe(30 * 60_000);
+  });
+
+  it('always produces a valid plan', () => {
+    expect(sanitizeFocusPlan()).toEqual(DEFAULT_FOCUS_PLAN);
+    expect(sanitizeFocusPlan({ focusMin: 0, shortMin: -4, longMin: 9999, sessions: 99 })).toEqual({ focusMin: 1, shortMin: 1, longMin: 120, sessions: 8 });
+    expect(sanitizeFocusPlan({ focusMin: 'abc', sessions: Number.NaN })).toEqual(DEFAULT_FOCUS_PLAN);
+    expect(sanitizeFocusPlan({ focusMin: '50', shortMin: 7.6 })).toMatchObject({ focusMin: 50, shortMin: 8 });
   });
 });

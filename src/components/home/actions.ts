@@ -3,7 +3,7 @@ import { useConfirm, useStore, useToast } from '../../app/context';
 import type { Counter } from '../../core/types';
 import { clampValue } from '../../core/counter';
 import { formatNumber } from '../../core/format';
-import { isAtStart, isSingleValue } from './shared';
+import { LOCKED_MESSAGE, isAtStart, isSingleValue } from './shared';
 
 /** Actions shared by buttons, menus and keyboard shortcuts. */
 export function useCounterActions() {
@@ -13,6 +13,10 @@ export function useCounterActions() {
 
   const reset = useCallback(
     async (c: Counter) => {
+      if (c.locked) {
+        toast(LOCKED_MESSAGE);
+        return;
+      }
       if (isAtStart(c)) {
         toast(isSingleValue(c.mode) ? 'Already at the starting value.' : 'Every score is already 0.');
         return;

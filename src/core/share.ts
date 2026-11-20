@@ -107,7 +107,7 @@ export function counterFromShareToken(token: string, now = Date.now()): Counter 
   if (!isRecord(raw) || raw.v !== 1) {
     throw new ShareError('This share link was made by a different version of Tickwell and cannot be opened.');
   }
-  const cleaned = sanitizeCounter({ ...raw, id: undefined, folderId: null, pinned: false }, now);
+  const cleaned = sanitizeCounter({ ...raw, id: undefined, folderId: null, pinned: false, locked: false }, now);
   if (!cleaned) throw new ShareError('This share link does not contain a counter.');
   // Re-create so that no stray fields or timestamps survive.
   return createCounter(

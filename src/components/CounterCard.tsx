@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react';
-import { Minus, Pin, Plus } from 'lucide-react';
+import { Lock, Minus, Pin, Plus } from 'lucide-react';
 import type { Counter } from '../core/types';
 import { gradientCss } from '../core/colors';
 import { relativeTime } from '../core/format';
@@ -63,6 +63,7 @@ export function CounterCard({ counter, view = 'grid', onOpen, onBump, menu, arti
       <span className="flex items-center gap-1.5">
         <span className="truncate text-[15.5px] font-semibold tracking-tight">{counter.name}</span>
         {counter.pinned && <Pin size={13} className={cx('shrink-0', sub)} aria-label="Pinned" />}
+        {counter.locked && <Lock size={13} className={cx('shrink-0', sub)} aria-label="Locked" />}
       </span>
       <span className={cx('block truncate text-[12.5px]', sub)}>{counter.description || modeName(counter.mode)}</span>
     </span>
@@ -86,7 +87,7 @@ export function CounterCard({ counter, view = 'grid', onOpen, onBump, menu, arti
     </div>
   );
 
-  const quick = onBump && single && (
+  const quick = onBump && single && !counter.locked && (
     <div className="flex items-center gap-1">
       <IconButton label={`Subtract ${counter.step} from ${counter.name}`} size="sm" variant="secondary" icon={<Minus size={16} />} onClick={() => onBump(-1)} />
       <IconButton label={`Add ${counter.step} to ${counter.name}`} size="sm" variant="secondary" icon={<Plus size={16} />} onClick={() => onBump(1)} />

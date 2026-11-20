@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { ArrowDown, ArrowUp, BarChart3, Flame, Minus, Trophy } from 'lucide-react';
 import { useAppState } from '../app/context';
 import { liveCounters } from '../app/selectors';
-import { RANGES, bucketize, bucketLabel, comparePeriods, computeStreaks, goalHistory, inWindow, rangeWindow, sessionsFrom, statsByCounter, summarize } from '../core/stats';
+import { RANGES, bucketize, heatmap, bucketLabel, comparePeriods, computeStreaks, goalHistory, inWindow, rangeWindow, sessionsFrom, statsByCounter, summarize } from '../core/stats';
 import type { RangeKey } from '../core/stats';
 import {
   GRANULARITIES,
@@ -19,7 +19,8 @@ import {
 import type { CounterSortKey, Granularity } from '../core/histview';
 import { formatDateTime, formatNumber, relativeTime, signed } from '../core/format';
 import { navigate } from '../lib/router';
-import { BarChart, ShareBars } from '../components/charts';
+import { ActivityHeatmap, BarChart, ShareBars } from '../components/charts';
+import { useViewport } from '../components/home/shared';
 import { Button, Card, EmptyState, PageHeader, Segmented, Select } from '../components/ui';
 
 function Tile({ label, value, sub, icon }: { label: string; value: string; sub?: string; icon?: ReactNode }) {
@@ -69,6 +70,8 @@ export default function StatsPage() {
   const [gran, setGran] = useState<Granularity>('auto');
   const [sort, setSort] = useState<{ key: CounterSortKey; dir: 'asc' | 'desc' }>({ key: 'activity', dir: 'desc' });
   const now = Date.now();
+  const { w: viewWidth } = useViewport();
+  const heatWeeks = viewWidth < 520 ? 16 : viewWidth < 900 ? 30 : 52;
 
   const scoped = useMemo(() => (counterId === 'all' ? history : history.filter((e) => e.counterId === counterId)), [history, counterId]);
   const earliest = scoped.reduce<number | undefined>((m, e) => (m === undefined || e.at < m ? e.at : m), undefined);
@@ -83,6 +86,7 @@ export default function StatsPage() {
   const hours = useMemo(() => hourCounts(inRange), [inRange]);
   const week = useMemo(() => activityByPeriod(scoped, now, 'week'), [scoped, now]);
   const month = useMemo(() => activityByPeriod(scoped, now, 'month'), [scoped, now]);
+  const calendar = useMemo(() => heatmap(scoped, heatWeeks, now), [scoped, heatWeeks, now]);
   const goals = useMemo(() => goalHistory(inRange), [inRange]);
   const sessions = useMemo(() => sessionsFrom(inRange).slice(0, 5), [inRange]);
   const rows = useMemo(() => {
@@ -157,6 +161,18 @@ export default function StatsPage() {
           />
         </div>
         <BarChart data={bars} title="Increases and decreases over time" legend={['Increases', 'Decreases']} />
+      </Card>
+
+      <Card className="space-y-3 p-5" solid>
+        <div>
+          <h2 className="text-[16px] font-semibold tracking-tight">Daily activity</h2>
+          <p className="text-[13px] text-muted">
+            {calendar.total === 0
+              ? `No counting in the last ${heatWeeks} weeks.`
+              : `${formatNumber(calendar.total)} changes on ${formatNumber(calendar.activeDays)} ${calendar.activeDays === 1 ? 'day' : 'days'} in the last ${heatWeeks} weeks. Busiest day: ${formatNumber(calendar.max)}.`}
+          </p>
+        </div>
+        <ActivityHeatmap data={calendar} title={`Daily activity over the last ${heatWeeks} weeks`} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">

@@ -599,3 +599,80 @@ describe('export, import and restore points', () => {
     expect(() => parseBackup(JSON.stringify(b))).not.toThrow();
   });
 });
+
+describe('locking a counter', () => {
+  it('ignores taps, typed values, resets, undo and redo while locked', async () => {
+    const { store } = await makeStore();
+    const c = store.addCounter({ name: 'Safe', step: 1 });
+    store.bump(c.id, 1);
+    store.bump(c.id, 1);
+    expect(store.toggleLock(c.id)).toBe(true);
+    const before = store.getState().history.length;
+
+    expect(store.bump(c.id, 1)).toMatchObject({ delta: 0, locked: true, value: 2 });
+    expect(store.setValue(c.id, 50)).toMatchObject({ delta: 0, locked: true });
+    expect(store.reset(c.id)).toBe(false);
+    expect(store.undo(c.id)).toBe(false);
+    expect(store.redo(c.id)).toBe(false);
+    expect(store.getCounter(c.id)!.value).toBe(2);
+    expect(store.getState().history).toHaveLength(before);
+  });
+
+  it('works again after unlocking and can still undo earlier taps', async () => {
+    const { store } = await makeStore();
+    const c = store.addCounter({ name: 'Safe' });
+    store.bump(c.id, 1);
+    store.toggleLock(c.id);
+    expect(store.toggleLock(c.id)).toBe(false);
+    expect(store.bump(c.id, 1)?.locked).toBeUndefined();
+    expect(store.getCounter(c.id)!.value).toBe(2);
+    expect(store.undo(c.id)).toBe(true);
+    expect(store.getCounter(c.id)!.value).toBe(1);
+  });
+
+  it('locks player scores and sub-counters too', async () => {
+    const { store } = await makeStore();
+    const c = store.addCounter({ name: 'Game', mode: 'score' });
+    const player = store.getCounter(c.id)!.players[0];
+    store.toggleLock(c.id);
+    expect(store.bumpTarget(c.id, player.id, 1)).toMatchObject({ delta: 0, locked: true });
+    expect(store.setTargetValue(c.id, player.id, 9)).toMatchObject({ delta: 0, locked: true });
+    expect(store.getCounter(c.id)!.players[0].score).toBe(0);
+  });
+
+  it('still lets auto-counting run on a locked interval counter', async () => {
+    const { store } = await makeStore();
+    const c = store.addCounter({ name: 'Ticker', mode: 'interval' });
+    store.toggleLock(c.id);
+    const r = store.bump(c.id, 1, undefined, 'auto');
+    expect(r?.locked).toBeUndefined();
+    expect(store.getCounter(c.id)!.value).toBe(1);
+  });
+
+  it('refuses to revert a history entry on a locked counter', async () => {
+    const { store } = await makeStore();
+    const c = store.addCounter({ name: 'Safe' });
+    store.bump(c.id, 1);
+    const entry = store.getState().history[0];
+    store.toggleLock(c.id);
+    expect(store.revertEntry(entry.id)).toBe('locked');
+    expect(store.getCounter(c.id)!.value).toBe(1);
+  });
+
+  it('returns null for a counter that does not exist and unlocks duplicates', async () => {
+    const { store } = await makeStore();
+    expect(store.toggleLock('nope')).toBeNull();
+    const c = store.addCounter({ name: 'Safe' });
+    store.toggleLock(c.id);
+    const copy = store.duplicateCounter(c.id)!;
+    expect(copy.locked).toBe(false);
+  });
+
+  it('survives a backup round trip', async () => {
+    const { store } = await makeStore();
+    const c = store.addCounter({ name: 'Safe' });
+    store.toggleLock(c.id);
+    const backup = parseBackup(JSON.stringify(store.exportBackup()));
+    expect(backup.counters.find((x) => x.id === c.id)!.locked).toBe(true);
+  });
+});
