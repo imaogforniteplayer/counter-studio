@@ -200,9 +200,9 @@ for (const [label, opts, flags] of sizes) {
     await esc();
   }
   if (await click(aria('Actions for'), 250, 'counter actions')) {
-    if (await click(page.getByRole('menuitem', { name: 'Lock counter' }), 300, 'Lock counter')) {
+    if (await click(page.locator('[role="menuitem"]:visible:has-text("Lock counter")'), 300, 'Lock counter')) {
       await report('home: locked counter');
-      if (await click(btn(/Unlock it/), 250, 'Unlock')) await report('home: unlocked again');
+      if (await click(aria('This counter is locked'), 250, 'Unlock')) await report('home: unlocked again');
     } else await esc();
   }
   await page.keyboard.press('?');
