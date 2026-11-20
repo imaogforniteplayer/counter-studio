@@ -12,12 +12,73 @@ export function audio(): AudioContext | null {
         window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctor) return null;
       ctx = new Ctor();
+      // On iPhones and iPads, Web Audio follows the ringer switch unless the page asks to be treated as media.
+      try {
+        const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+        if (session) session.type = 'playback';
+      } catch {
+        /* older browsers do not have it */
+      }
     }
-    if (ctx.state === 'suspended') void ctx.resume();
+    // A context starts "suspended" until a tap or key press, and iOS can "interrupt" it later (a phone call, say).
+    if (ctx.state !== 'running') void ctx.resume().catch(() => undefined);
     return ctx;
   } catch {
     return null;
   }
+}
+
+/** Whether sound can play right now. 'blocked' means the browser is still holding the audio back. */
+export function audioStatus(): 'running' | 'blocked' | 'unsupported' {
+  if (typeof window === 'undefined') return 'unsupported';
+  if (!ctx) return window.AudioContext || (window as unknown as { webkitAudioContext?: unknown }).webkitAudioContext ? 'blocked' : 'unsupported';
+  return ctx.state === 'running' ? 'running' : 'blocked';
+}
+
+/**
+ * Browsers only let a page make sound after a tap or key press. Call this from one, and the sound engine is
+ * ready for later, such as a timer that ends minutes after Start was pressed.
+ */
+export function unlockAudio(): void {
+  const ac = audio();
+  if (!ac) return;
+  try {
+    // A one-sample silent sound finishes the unlock on iOS Safari.
+    const src = ac.createBufferSource();
+    src.buffer = ac.createBuffer(1, 1, 22050);
+    src.connect(ac.destination);
+    src.start(0);
+  } catch {
+    /* the resume above is enough on other browsers */
+  }
+}
+
+/** Run `fn` once the audio clock is running, or after a short wait if the browser is slow to allow it. */
+export function whenAudioRuns(ac: AudioContext, fn: () => void): void {
+  if (ac.state === 'running') {
+    fn();
+    return;
+  }
+  let done = false;
+  const go = () => {
+    if (done) return;
+    done = true;
+    fn();
+  };
+  ac.resume().then(go, go);
+  window.setTimeout(go, 500);
+}
+
+/** Start listening for the first tap, click or key press, then unlock sound and stop listening. */
+export function unlockAudioOnFirstGesture(): () => void {
+  const events = ['pointerdown', 'touchend', 'click', 'keydown'] as const;
+  const handler = () => {
+    unlockAudio();
+    if (ctx && ctx.state === 'running') off();
+  };
+  const off = () => events.forEach((e) => window.removeEventListener(e, handler, true));
+  events.forEach((e) => window.addEventListener(e, handler, true));
+  return off;
 }
 
 interface Voice {
@@ -55,8 +116,12 @@ function voices(preset: Settings['soundPreset'], kind: FeedbackKind): Voice[] {
 function play(settings: Settings, kind: FeedbackKind): void {
   const ac = audio();
   if (!ac) return;
+  whenAudioRuns(ac, () => playNow(ac, settings, kind));
+}
+
+function playNow(ac: AudioContext, settings: Settings, kind: FeedbackKind): void {
   const master = ac.createGain();
-  master.gain.value = Math.max(0, Math.min(1, settings.soundVolume)) * 0.6;
+  master.gain.value = Math.max(0, Math.min(1, settings.soundVolume)) * 0.9;
   master.connect(ac.destination);
   const now = ac.currentTime;
   for (const v of voices(settings.soundPreset, kind)) {

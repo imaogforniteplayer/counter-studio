@@ -1,5 +1,5 @@
 import type { AlarmSound, Settings } from '../core/types';
-import { audio, buzz } from './feedback';
+import { audio, buzz, whenAudioRuns } from './feedback';
 
 interface Note {
   type: OscillatorType;
@@ -123,34 +123,40 @@ export function startAlarm(settings: Settings, sound: AlarmSound = settings.alar
   }
 
   let master: GainNode | null = null;
+  let stopped = false;
   const ac = pattern.notes.length > 0 ? audio() : null;
   if (ac) {
-    master = ac.createGain();
-    master.gain.value = Math.max(0, Math.min(1, settings.alarmVolume)) * 0.7;
-    master.connect(ac.destination);
-    const start = ac.currentTime + 0.03;
-    for (let round = 0; round < rounds; round++) {
-      for (const n of pattern.notes) {
-        const t = start + round * pattern.cycle + n.at;
-        const osc = ac.createOscillator();
-        const env = ac.createGain();
-        osc.type = n.type;
-        osc.frequency.setValueAtTime(n.from, t);
-        if (n.to) osc.frequency.exponentialRampToValueAtTime(n.to, t + n.length);
-        env.gain.setValueAtTime(0.0001, t);
-        env.gain.exponentialRampToValueAtTime(n.gain, t + (n.attack ?? 0.005));
-        env.gain.exponentialRampToValueAtTime(0.0001, t + n.length);
-        osc.connect(env);
-        env.connect(master);
-        osc.start(t);
-        osc.stop(t + n.length + 0.05);
+    // Wait until the browser lets the audio clock run, so the notes are not scheduled into a frozen clock.
+    whenAudioRuns(ac, () => {
+      if (stopped) return;
+      master = ac.createGain();
+      master.gain.value = Math.max(0, Math.min(1, settings.alarmVolume));
+      master.connect(ac.destination);
+      const start = ac.currentTime + 0.05;
+      for (let round = 0; round < rounds; round++) {
+        for (const n of pattern.notes) {
+          const t = start + round * pattern.cycle + n.at;
+          const osc = ac.createOscillator();
+          const env = ac.createGain();
+          osc.type = n.type;
+          osc.frequency.setValueAtTime(n.from, t);
+          if (n.to) osc.frequency.exponentialRampToValueAtTime(n.to, t + n.length);
+          env.gain.setValueAtTime(0.0001, t);
+          env.gain.exponentialRampToValueAtTime(n.gain, t + (n.attack ?? 0.005));
+          env.gain.exponentialRampToValueAtTime(0.0001, t + n.length);
+          osc.connect(env);
+          env.connect(master);
+          osc.start(t);
+          osc.stop(t + n.length + 0.05);
+        }
       }
-    }
+    });
   }
 
   const handle: AlarmHandle = {
     seconds,
     stop: () => {
+      stopped = true;
       timers.forEach((t) => window.clearTimeout(t));
       if (master && ac) {
         try {

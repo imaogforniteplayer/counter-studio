@@ -7,6 +7,7 @@ import { NAV_ITEMS, Nav } from './components/Nav';
 import { Button, Notice, PageSkeleton } from './components/ui';
 import { Onboarding } from './components/Onboarding';
 import { CommandPalette } from './components/CommandPalette';
+import { unlockAudioOnFirstGesture } from './lib/feedback';
 import HomePage from './pages/Home';
 
 // Everything except Home is loaded on demand, so the first screen appears quickly.
@@ -91,6 +92,8 @@ export default function App() {
   const { settings, storage, loadError } = useAppState();
   useApplyTheme(settings);
   useGlobalShortcuts();
+  // Browsers keep sound off until the first tap or key press. Unlock it then, so alarms can ring later.
+  useEffect(() => unlockAudioOnFirstGesture(), []);
 
   const main = useRef<HTMLElement>(null);
   const first = useRef(true);
