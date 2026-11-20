@@ -66,6 +66,9 @@ for (const [label, opts, flags] of sizes) {
   // A control that cannot be clicked is reported, never silently skipped: it may be covered or missing.
   const click = async (locator, ms = 250, what = String(locator)) => {
     try {
+      // Scroll first and let it settle. Menus close when the page scrolls, so a click that scrolls the button into view would close its own menu.
+      await locator.first().scrollIntoViewIfNeeded({ timeout: 2500 });
+      await page.waitForTimeout(120);
       await locator.first().click({ timeout: 2500 });
       await page.waitForTimeout(ms);
       return true;
