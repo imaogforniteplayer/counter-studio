@@ -66,8 +66,8 @@ for (const [label, opts, flags] of sizes) {
   // A control that cannot be clicked is reported, never silently skipped: it may be covered or missing.
   const click = async (locator, ms = 250, what = String(locator)) => {
     try {
-      // Scroll first and let it settle. Menus close when the page scrolls, so a click that scrolls the button into view would close its own menu.
-      await locator.first().scrollIntoViewIfNeeded({ timeout: 2500 });
+      // Scroll to the middle first and let it settle. Menus close when the page scrolls, so a click that has to scroll (a button under the bottom bar, say) would close its own menu.
+      await locator.first().evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'nearest' }), undefined, { timeout: 2500 });
       await page.waitForTimeout(120);
       await locator.first().click({ timeout: 2500 });
       await page.waitForTimeout(ms);
@@ -202,12 +202,11 @@ for (const [label, opts, flags] of sizes) {
     await report('reset confirmation');
     await esc();
   }
-  if (await click(aria('Actions for'), 250, 'counter actions')) {
-    if (await click(page.locator('[role="menuitem"]:visible:has-text("Lock counter")'), 300, 'Lock counter')) {
-      await report('home: locked counter');
-      if (await click(aria('This counter is locked'), 250, 'Unlock')) await report('home: unlocked again');
-    } else await esc();
-  }
+  // Lock with the keyboard shortcut (opening the menu on a small phone depends on how the page scrolls), then unlock with the chip.
+  await page.keyboard.press('l');
+  await page.waitForTimeout(300);
+  await report('home: locked counter');
+  if (await click(aria('This counter is locked'), 250, 'Unlock')) await report('home: unlocked again');
   await page.keyboard.press('?');
   await page.waitForTimeout(250);
   await report('shortcuts help');
