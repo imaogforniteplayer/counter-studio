@@ -123,10 +123,13 @@ export default function StatsPage() {
       <PageHeader title="Statistics" subtitle="Charts and totals from your counting history." />
 
       <div className="flex flex-wrap items-center gap-3">
-        <Segmented ariaLabel="Time range" value={range} onChange={setRange} options={RANGES.map((r) => ({ value: r.id, label: r.label }))} size="sm" />
+        <Select aria-label="Time range" className="w-full sm:hidden" value={range} onChange={setRange} options={RANGES.map((r) => ({ value: r.id, label: r.label }))} />
+        <div className="hidden sm:block">
+          <Segmented ariaLabel="Time range" value={range} onChange={setRange} options={RANGES.map((r) => ({ value: r.id, label: r.label }))} size="sm" />
+        </div>
         <Select
           aria-label="Counter"
-          className="w-52"
+          className="w-full sm:w-52"
           value={counterId}
           onChange={setCounterId}
           options={[{ value: 'all', label: 'All counters' }, ...live.map((c) => ({ value: c.id, label: c.name }))]}
@@ -175,7 +178,7 @@ export default function StatsPage() {
         <ActivityHeatmap data={calendar} title={`Daily activity over the last ${heatWeeks} weeks`} />
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="space-y-3 p-5" solid>
           <h2 className="text-[16px] font-semibold tracking-tight">By weekday</h2>
           <BarChart height={170} title="Changes by weekday" data={WEEKDAY_LABELS.map((l, i) => ({ label: l, value: weekdays[i] }))} />
@@ -186,7 +189,7 @@ export default function StatsPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="space-y-3 p-5" solid>
           <h2 className="text-[16px] font-semibold tracking-tight">This week and this month</h2>
           <dl className="space-y-3 text-sm">
@@ -256,7 +259,7 @@ export default function StatsPage() {
         </div>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="space-y-3 p-5" solid>
           <h2 className="text-[16px] font-semibold tracking-tight">Goals reached</h2>
           {goals.length === 0 ? (

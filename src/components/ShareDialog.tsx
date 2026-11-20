@@ -92,7 +92,7 @@ function Inner({ counter, onClose }: { counter: Counter; onClose: () => void }) 
       description="Anyone with the link gets their own copy to count with. Nothing is uploaded anywhere."
       footer={<Button onClick={onClose}>Done</Button>}
     >
-      <div className="grid gap-6 md:grid-cols-[1fr_auto]">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto]">
         <div className="min-w-0 space-y-5">
           <div>
             <h3 className="eyebrow mb-1">What to include</h3>

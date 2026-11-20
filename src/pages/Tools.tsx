@@ -118,8 +118,8 @@ function Stopwatch() {
   return (
     <Panel title="Stopwatch" description="Time anything, with laps. It keeps correct time even if the tab is in the background.">
       <BigReadout label={`Elapsed ${formatDuration(elapsed, true)}`}>{formatDuration(elapsed, true)}</BigReadout>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="primary" size="lg" icon={running ? <Pause size={18} /> : <Play size={18} />} onClick={toggle} className="flex-1">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_auto_auto]">
+        <Button variant="primary" size="lg" icon={running ? <Pause size={18} /> : <Play size={18} />} onClick={toggle} className="col-span-2 sm:col-span-1">
           {running ? 'Pause' : elapsed > 0 ? 'Resume' : 'Start'}
         </Button>
         <Button size="lg" icon={<Flag size={17} />} onClick={lap} disabled={elapsed === 0}>
@@ -474,13 +474,13 @@ function FocusTimer() {
           </div>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_auto_auto]">
         {running ? (
-          <Button variant="primary" size="lg" icon={<Pause size={18} />} onClick={pause} className="flex-1">
+          <Button variant="primary" size="lg" icon={<Pause size={18} />} onClick={pause} className="col-span-2 sm:col-span-1">
             Pause
           </Button>
         ) : (
-          <Button variant="primary" size="lg" icon={<Play size={18} />} onClick={start} className="flex-1">
+          <Button variant="primary" size="lg" icon={<Play size={18} />} onClick={start} className="col-span-2 sm:col-span-1">
             {left !== null && left > 0 ? 'Resume' : started ? 'Start next' : 'Start'}
           </Button>
         )}
@@ -727,7 +727,7 @@ function PaceCalc() {
   const result = inputsOk ? pace(t, c, when, Date.now()) : null;
   return (
     <Panel title="Pace" description="Work out how much to count each day to reach a goal by a date.">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Field label="Goal" htmlFor="p-t">
           <TextInput id="p-t" type="number" inputMode="decimal" min={0} value={target} onChange={setTarget} />
         </Field>
@@ -779,9 +779,9 @@ export default function ToolsPage() {
   return (
     <div className="pb-10">
       <PageHeader title="Tools" subtitle="Small helpers that work alongside your counters. Nothing here leaves your device." />
-      <div className="mb-6 flex flex-wrap justify-center gap-2" role="tablist" aria-label="Tools">
+      <div className="mx-auto mb-6 grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-3" role="tablist" aria-label="Tools">
         {TOOLS.map((t) => (
-          <button key={t.id} id={`tool-tab-${t.id}`} type="button" role="tab" aria-selected={tool === t.id} aria-controls="tool-panel" data-active={tool === t.id} className="chip gap-2" onClick={() => pick(t.id)}>
+          <button key={t.id} id={`tool-tab-${t.id}`} type="button" role="tab" aria-selected={tool === t.id} aria-controls="tool-panel" data-active={tool === t.id} className="chip w-full justify-center gap-2 max-sm:last:col-span-2" onClick={() => pick(t.id)}>
             {t.icon}
             {t.name}
           </button>

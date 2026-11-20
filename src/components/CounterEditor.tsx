@@ -298,7 +298,7 @@ function EditorInner({ options, onClose }: { options: EditorOptions; onClose: ()
       footer={footer}
     >
       {stage === 'mode' ? (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {MODES.map((mode) => (
             <button
               key={mode}
@@ -352,7 +352,7 @@ function EditorInner({ options, onClose }: { options: EditorOptions; onClose: ()
           </Section>
 
           <Section title="Numbers">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Step" htmlFor="ce-step" hint="How much each tap adds or subtracts." error={err('step')}>
                 <NumberField id="ce-step" value={draft.step} onChange={(v) => set('step', v)} />
               </Field>
@@ -380,7 +380,7 @@ function EditorInner({ options, onClose }: { options: EditorOptions; onClose: ()
 
           {m === 'interval' && (
             <Section title="Interval">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Count every" htmlFor="ce-int" error={err('interval')}>
                   <div className="flex gap-2">
                     <NumberField id="ce-int" value={draft.intervalAmount} onChange={(v) => set('intervalAmount', v)} className="min-w-0 flex-1" />

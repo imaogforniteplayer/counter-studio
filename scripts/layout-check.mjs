@@ -91,6 +91,15 @@ function inPage() {
       }
     }
   }
+  // Cards must sit inside the screen even if the page hides sideways scrolling.
+  for (const c of document.querySelectorAll('.card, .card-solid, .card-link')) {
+    if (!visible(c) || isFixed(c)) continue;
+    const r = c.getBoundingClientRect();
+    if (r.width > 0 && (r.right > innerWidth + 1 || r.left < -1)) {
+      problems.push(`card runs off-screen: ${name(c)} left=${Math.round(r.left)} right=${Math.round(r.right)} screen=${innerWidth}`);
+      break;
+    }
+  }
   // The page itself must never scroll sideways.
   if (document.documentElement.scrollWidth > innerWidth + 1) {
     const describe = (e) => `${name(e)} ${e.className && typeof e.className === 'string' ? '.' + e.className.split(' ').slice(0, 3).join('.') : ''} right=${Math.round(e.getBoundingClientRect().right)} pos=${getComputedStyle(e).position} ov=${getComputedStyle(e).overflowX}`;

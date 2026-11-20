@@ -190,7 +190,7 @@ export function PageSkeleton() {
     <div className="space-y-4" role="status" aria-label="Loading page">
       <Skeleton className="h-9 w-56" />
       <Skeleton className="h-4 w-80 max-w-full" />
-      <div className="grid gap-4 pt-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 pt-4 sm:grid-cols-2 xl:grid-cols-3">
         <Skeleton className="h-36" />
         <Skeleton className="h-36" />
         <Skeleton className="h-36" />

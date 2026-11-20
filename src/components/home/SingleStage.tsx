@@ -37,7 +37,7 @@ export function SingleStage({ counter: c, counting, auto, full }: StageProps) {
   const ring = c.mode === 'goal' || c.mode === 'countdown';
   const text = formatNumber(c.value);
   const width = full ? w - 48 : contentWidth(w) - 48;
-  const ringSize = ring ? clampNumber(full ? Math.min(h * 0.48, width) : Math.min(width, 340), 200, 560) : 0;
+  const ringSize = ring ? clampNumber(full ? Math.min(h * 0.48, width) : Math.min(width, 340, h - 590), 180, 560) : 0;
   const numPx = ring
     ? fitNumberPx(text.length, ringSize * 0.72, ringSize * 0.3, settings.numberScale)
     : fitNumberPx(text.length, width, isTally ? 96 : full ? Math.min(h * 0.34, 380) : 168, settings.numberScale);

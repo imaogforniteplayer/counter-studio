@@ -321,7 +321,7 @@ export default function CountersPage() {
           <EmptyState icon={<Layers size={26} />} title="Nothing here yet" description="Counters you use will show up here." />
         )
       ) : (
-        <div className={cx(view === 'grid' ? 'stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-3' : 'stagger space-y-3')}>
+        <div className={cx(view === 'grid' ? 'stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3' : 'stagger space-y-3')}>
           {visible.map((c, i) => (
             <CounterCard
               key={c.id}

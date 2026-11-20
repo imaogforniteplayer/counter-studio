@@ -35,7 +35,7 @@ function TemplateCard({ t, onUse, onCustomise, onDelete }: { t: Template; onUse:
         ))}
       </div>
       <div className="mt-auto flex flex-wrap gap-2">
-        <Button variant="primary" className="min-w-[8.5rem] flex-1" icon={<Plus size={16} />} onClick={onUse}>
+        <Button variant="primary" className="min-w-[7.5rem] flex-1" icon={<Plus size={16} />} onClick={onUse}>
           Use template
         </Button>
         <Button icon={<SlidersHorizontal size={15} />} onClick={onCustomise} aria-label={`Customise ${t.name} before creating`}>
@@ -134,7 +134,7 @@ export default function TemplatesPage() {
           )}
         </EmptyState>
       ) : (
-        <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((t) => (
             <TemplateCard
               key={t.id}
@@ -157,7 +157,7 @@ export default function TemplatesPage() {
         {live.length === 0 ? (
           <p className="mt-4 text-sm text-muted">Create a counter first, then come back here.</p>
         ) : (
-          <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
             <Field label="Counter" htmlFor="tpl-source">
               <Select
                 id="tpl-source"
