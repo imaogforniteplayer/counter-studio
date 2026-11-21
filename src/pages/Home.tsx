@@ -4,6 +4,8 @@ import { LayoutTemplate, Plus, Sparkles, X } from 'lucide-react';
 import { useAppState, useDialogs, useStore } from '../app/context';
 import { currentCounter, liveCounters, recentlyUsed } from '../app/selectors';
 import type { Counter } from '../core/types';
+import { BUILTIN_TEMPLATES } from '../core/templates';
+import { counterFromConfig } from '../core/counter';
 import { CounterIcon } from '../lib/icons';
 import { navigate } from '../lib/router';
 import { cx } from '../lib/cx';
@@ -25,7 +27,7 @@ function EmptyHome() {
   const store = useStore();
   const dialogs = useDialogs();
   return (
-    <div className="mx-auto max-w-lg pt-6 sm:pt-16">
+    <div className="mx-auto max-w-2xl pt-6 sm:pt-12">
       <EmptyState
         icon={<Sparkles size={28} />}
         title="Let's start counting"
@@ -48,6 +50,34 @@ function EmptyHome() {
           Browse templates
         </Button>
       </EmptyState>
+      <section className="-mt-4 sm:mt-0" aria-labelledby="quick-start">
+        <h2 id="quick-start" className="mb-3 text-center text-[13px] font-medium text-muted">
+          Or start from one that is ready made
+        </h2>
+        <ul className="stagger grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {BUILTIN_TEMPLATES.slice(0, 6).map((t) => (
+            <li key={t.id}>
+              <button
+                type="button"
+                className="card-link flex w-full items-center gap-3.5 rounded-2xl border border-line/15 bg-surface/70 p-3.5 text-left"
+                onClick={() => {
+                  const created = store.addCounter(counterFromConfig(t.config, t.name));
+                  store.selectCounter(created.id);
+                }}
+              >
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl shadow-soft" style={tileStyle(t.config.color)}>
+                  <CounterIcon name={t.config.icon} size={21} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14.5px] font-semibold tracking-tight">{t.name}</span>
+                  <span className="mt-0.5 line-clamp-2 block text-[12.5px] leading-snug text-muted">{t.description || t.config.description}</span>
+                </span>
+                <Plus size={17} className="shrink-0 text-muted" aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

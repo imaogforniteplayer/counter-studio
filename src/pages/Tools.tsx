@@ -63,7 +63,7 @@ function useTick(active: boolean, ms = 50): number {
 
 function Panel({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   return (
-    <Card className="mx-auto max-w-xl space-y-5 p-5 sm:p-6" solid>
+    <Card className="mx-auto max-w-xl space-y-5 p-5 sm:p-6 lg:mx-0 lg:max-w-2xl" solid>
       <div>
         <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
         <p className="text-sm text-muted">{description}</p>
@@ -779,9 +779,10 @@ export default function ToolsPage() {
   return (
     <div className="pb-10">
       <PageHeader title="Tools" subtitle="Small helpers that work alongside your counters. Nothing here leaves your device." />
-      <div className="mx-auto mb-6 grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-3" role="tablist" aria-label="Tools">
+      <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <div className="mx-auto mb-6 grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-3 lg:sticky lg:top-6 lg:mx-0 lg:mb-0 lg:grid-cols-1" role="tablist" aria-label="Tools">
         {TOOLS.map((t) => (
-          <button key={t.id} id={`tool-tab-${t.id}`} type="button" role="tab" aria-selected={tool === t.id} aria-controls="tool-panel" data-active={tool === t.id} className="chip w-full justify-center gap-2 max-sm:last:col-span-2" onClick={() => pick(t.id)}>
+          <button key={t.id} id={`tool-tab-${t.id}`} type="button" role="tab" aria-selected={tool === t.id} aria-controls="tool-panel" data-active={tool === t.id} className="chip w-full justify-center gap-2 max-sm:last:col-span-2 lg:h-11 lg:justify-start lg:px-4" onClick={() => pick(t.id)}>
             {t.icon}
             {t.name}
           </button>
@@ -797,6 +798,7 @@ export default function ToolsPage() {
         {tool === 'picker' && <Picker />}
         {tool === 'tempo' && <TapTempo />}
         {tool === 'pace' && <PaceCalc />}
+      </div>
       </div>
     </div>
   );
